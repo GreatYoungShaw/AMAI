@@ -7,12 +7,12 @@ You can run, but you can't hide
 I think I know where [PlayerColor] started
 One loss coming up! Check please!
 I hope you play better then last time. Remember? :)
-{!RaceChoiceRandom,Race=ORC} Orcs, why did it have to be orcs?
+{!RaceChoiceRandom,Race=Orc} Orcs, why did it have to be orcs?
 What's my name? [Name] What's my name? [Name] WHAT'S MY NAME!
 Supposedly [RandomRace] really suck these days... guess we'll find out.
-{Race!=UNDEAD} Why don't I ever get Undead?
-{Race!=HUMAN} Thank god I'm not humans again.
-{!RaceChoiceRandom,Race=ORC,1on1} Orcs rule 1 on 1.  My [Color] [Race] army is gonna own you.
+{Race!=Undead} Why don't I ever get Undead?
+{Race!=Human} Thank god I'm not humans again.
+{!RaceChoiceRandom,Race=Orc,1on1} Orcs rule 1 on 1.  My [Color] [Race] army is gonna own you.
 {Name=Hunter}Let the hunt begin!
 {Name=Crazy_Rusher} Rush, Rush, RUSH!!!
 {Name=Crusher}Are you ready... Ready to be crushed.

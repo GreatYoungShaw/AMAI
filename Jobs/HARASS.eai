@@ -100,13 +100,13 @@ endfunction
 
 function HarassJob takes integer ht, unit targ, group harasser returns nothing
   local unit target = targ
-  local integer key = GetHandleId(harasser)
-  local real strength_limit = LoadReal(additional_info, key, STRENGTH_LIMIT)
-  local boolean state_attacking = LoadBoolean(additional_info, key, STATE_ATTACKING)
-  local real flee_percent = LoadReal(additional_info, key, FLEE_PERCENT)
-  local boolean avoiding_towers = LoadBoolean(additional_info, key, AVOID_TOWERS)
-  local boolean state_retreat = LoadBoolean(additional_info, key, STATE_RETREAT)
-  local real start_strength = LoadReal(additional_info, key, START_STRENGTH)
+  local string key = Int2Str(H2I(harasser))
+  local real strength_limit = GetStoredReal(additional_info, key, "Strength_Limit")
+  local boolean state_attacking = GetStoredBoolean(additional_info, key, "State_Attacking")
+  local real flee_percent = GetStoredReal(additional_info, key, "Flee_Percent")
+  local boolean avoiding_towers = GetStoredBoolean(additional_info, key, "Avoid_Towers")
+  local boolean state_retreat = GetStoredBoolean(additional_info, key, "State_Retreat")
+  local real start_strength = GetStoredReal(additional_info, key, "Start_Strength")
   local group g = null
   local unit u = null
   local real strength_sum = 0
@@ -115,8 +115,8 @@ function HarassJob takes integer ht, unit targ, group harasser returns nothing
   local boolean towersdetected = false
   local location l = null
   local boolean hero_harass = false
-  local integer hiddencount = LoadInteger(additional_info, key, INVISIBLE_COUNT)
-  local integer timedelay = LoadInteger(additional_info, key, WINDWALK_COUNT) // Delay count so windwalkers show themselves after a period of waiting
+  local integer hiddencount = GetStoredInteger(additional_info, key, "Invisible_Count")
+  local integer timedelay = GetStoredInteger(additional_info, key, "Windwalk_Count") // Delay count so windwalkers show themselves after a period of waiting
 
   call DisplayToAllJobDebug("HARASS JOB START")
   if not UnitAliveInGroup(harasser) then
@@ -143,7 +143,7 @@ function HarassJob takes integer ht, unit targ, group harasser returns nothing
 	set l = null
 	return
   elseif state_retreat then
-    call SaveBoolean(additional_info, key, STATE_RETREAT , false)
+    call StoreBoolean(additional_info, key, "State_Retreat", false)
 	//call GroupRecycleGuardPositionInstant(harasser)
 	call GroupRecycleHarrassPositionInstant(harasser)
 	call RemoveLocation(l)
@@ -155,10 +155,10 @@ function HarassJob takes integer ht, unit targ, group harasser returns nothing
   
   if target != null and (IsUnitHidden(target) or IsUnitLoaded(target) or IsUnitInvisible(target, ai_player)) then	// Checks to see if unit is not targetable and after small period will change to target it can hit
 	set hiddencount = hiddencount + 1
-	call SaveInteger(additional_info, key, INVISIBLE_COUNT , hiddencount)
+	call StoreInteger(additional_info, key, "Inisible_Count", hiddencount)
   else
 	set hiddencount = 0
-	call SaveInteger(additional_info, key, INVISIBLE_COUNT , hiddencount)
+	call StoreInteger(additional_info, key, "Inisible_Count", hiddencount)
   endif
   
   if target == null or not UnitAlive(target) or hiddencount > 2 then
@@ -170,7 +170,7 @@ function HarassJob takes integer ht, unit targ, group harasser returns nothing
     elseif ht == HARASS_TARGET_EXPANSION then
       set target = GetHarassExpansionTarget(FirstOfGroup(harasser))
     elseif ht == HARASS_TARGET_LOCATION then
-      set target = GetHarassLocationTarget(LoadReal(additional_info, key, LOCX), LoadReal(additional_info, key, LOCY))
+      set target = GetHarassLocationTarget(GetStoredReal(additional_info, key, "LocationX"), GetStoredReal(additional_info, key, "LocationY"))
     else
       set target = GetHarassMainHallTarget(FirstOfGroup(harasser))
     endif
@@ -252,19 +252,19 @@ function HarassJob takes integer ht, unit targ, group harasser returns nothing
     call DestroyGroup(g)
     set g = null
     set u = null
-    if harass_num <= LoadInteger(additional_info, key, FLEE_NUMBER) or towersdetected or (player_sum <= start_strength * flee_percent and not hero_harass) then
-	  call SaveBoolean(additional_info, key, STATE_RETREAT, true)
+    if harass_num <= GetStoredInteger(additional_info, key, "Flee_Number") or towersdetected or (player_sum <= start_strength * flee_percent and not hero_harass) then
+	  call StoreBoolean(additional_info, key, "State_Retreat", true)
       call GroupPointOrder(harasser, "move", GetLocationX(home_location), GetLocationY(home_location))
       //call GroupRecycleGuardPosition(harasser)
       //return
     elseif strength_sum < strength_limit then
-      call SaveBoolean(additional_info, key, STATE_ATTACKING, true)
+      call StoreBoolean(additional_info, key, "State_Attacking", true)
 	  if IsUnitInvisible(FirstOfGroup(harasser), Player(PLAYER_NEUTRAL_AGGRESSIVE)) then
 		set timedelay = timedelay + 1
-		call SaveInteger(additional_info, key, WINDWALK_COUNT, timedelay)
+		call StoreInteger(additional_info, key, "Windwalk_Count", timedelay)
 	  else
 		set timedelay = -1	// Not a windwalker harassing so attack immediatly
-		call SaveInteger(additional_info, key, WINDWALK_COUNT, 0)		
+		call StoreInteger(additional_info, key, "Windwalk_Count", 0)		
 	  endif
       if DistanceBetweenUnits(FirstOfGroup(harasser), target) > 650 then
 	  	  	if DistanceBetweenUnits(FirstOfGroup(harasser), target) <= 5000 then
@@ -283,22 +283,22 @@ function HarassJob takes integer ht, unit targ, group harasser returns nothing
         //return
       endif
     elseif strength_sum >= strength_limit*2 then
-	  call SaveBoolean(additional_info, key, STATE_RETREAT, true)
+	  call StoreBoolean(additional_info, key, "State_Retreat", true)
       call GroupPointOrder(harasser, "move", GetLocationX(home_location), GetLocationY(home_location))
-      call SaveBoolean(additional_info, key, STATE_ATTACKING, false)	
+      call StoreBoolean(additional_info, key, "State_Attacking", false)	
       //call GroupRecycleGuardPosition(harasser)	  
 	else
-	  call SaveBoolean(additional_info, key, STATE_RETREAT, true)
+	  call StoreBoolean(additional_info, key, "State_Retreat", true)
       call GroupPointOrder(harasser, "move", GetLocationX(home_location), GetLocationY(home_location))
-      call SaveBoolean(additional_info, key, STATE_ATTACKING, false)
+      call StoreBoolean(additional_info, key, "State_Attacking", false)
 	  //call TQAddGroupJob(30, HARASS, ht, target, harasser)
     endif
   else
 //    call DisplayToAll("Target dead")
     call CreateDebugTag("HARASS: Target Dead", 10, target, 3.00, 1.50)
     call GroupPointOrder(harasser, "move", GetLocationX(home_location), GetLocationY(home_location))
-	call SaveBoolean(additional_info, key, STATE_RETREAT, true)
-	call SaveBoolean(additional_info, key, STATE_ATTACKING, false)
+	call StoreBoolean(additional_info, key, "State_Retreat", true)
+	call StoreBoolean(additional_info, key, "State_Attacking", false)
     //call GroupRecycleGuardPositionDelay(harasser,GetTimeToReachLoc(u, home_location) + 1)
     //return
   endif

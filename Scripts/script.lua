@@ -12,7 +12,7 @@ end
 
 
 --proc = grim.startexe(exe,"war3.exe -window"..grim.getargs())
-proc = grim.startinject2(exe,"war3.exe "..grim.getargs(),"bin\\ongameload.dll")
+proc = grim.startinject(exe,"war3.exe "..grim.getargs(),"bin\\ongameload.dll")
 if proc == 0 then
 	grim.messagebox("Couldn't start warcraft III","war3.lua")
 	return

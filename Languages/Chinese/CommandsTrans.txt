@@ -1,4 +1,4 @@
-﻿AI Setting	AI设定
+AI Setting	AI设定
 Chatter	聊天
 Turned On/Off Computer Chatter.	开/关聊?
 Turned On/Off Debug Mode.	开/关侦?

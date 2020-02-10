@@ -1,3 +1,737 @@
+//===========================================================================
+// Blizzard.j ( define Jass2 functions that need to be in every map script )
+// Version 1.20c
+//===========================================================================
+
+
+globals
+    //-----------------------------------------------------------------------
+    // Constants
+    //
+
+    // Misc constants
+    constant real      bj_PI                            = 3.14159
+    constant real      bj_E                             = 2.71828
+    constant real      bj_CELLWIDTH                     = 128.0
+    constant real      bj_CLIFFHEIGHT                   = 128.0
+    constant real      bj_UNIT_FACING                   = 270.0
+    constant real      bj_RADTODEG                      = 180.0/bj_PI
+    constant real      bj_DEGTORAD                      = bj_PI/180.0
+    constant real      bj_TEXT_DELAY_QUEST              = 20.00
+    constant real      bj_TEXT_DELAY_QUESTUPDATE        = 20.00
+    constant real      bj_TEXT_DELAY_QUESTDONE          = 20.00
+    constant real      bj_TEXT_DELAY_QUESTFAILED        = 20.00
+    constant real      bj_TEXT_DELAY_QUESTREQUIREMENT   = 20.00
+    constant real      bj_TEXT_DELAY_MISSIONFAILED      = 20.00
+    constant real      bj_TEXT_DELAY_ALWAYSHINT         = 12.00
+    constant real      bj_TEXT_DELAY_HINT               = 12.00
+    constant real      bj_TEXT_DELAY_SECRET             = 10.00
+    constant real      bj_TEXT_DELAY_UNITACQUIRED       = 15.00
+    constant real      bj_TEXT_DELAY_UNITAVAILABLE      = 10.00
+    constant real      bj_TEXT_DELAY_ITEMACQUIRED       = 10.00
+    constant real      bj_TEXT_DELAY_WARNING            = 12.00
+    constant real      bj_QUEUE_DELAY_QUEST             =  5.00
+    constant real      bj_QUEUE_DELAY_HINT              =  5.00
+    constant real      bj_QUEUE_DELAY_SECRET            =  3.00
+    constant real      bj_HANDICAP_EASY                 = 60.00
+    constant real      bj_GAME_STARTED_THRESHOLD        =  0.01
+    constant real      bj_WAIT_FOR_COND_MIN_INTERVAL    =  0.10
+    constant real      bj_POLLED_WAIT_INTERVAL          =  0.10
+    constant real      bj_POLLED_WAIT_SKIP_THRESHOLD    =  2.00
+
+    // Game constants
+    constant integer   bj_MAX_INVENTORY                 =   6
+    constant integer   bj_MAX_PLAYERS                   =  12
+    constant integer   bj_PLAYER_NEUTRAL_VICTIM         =  13
+    constant integer   bj_PLAYER_NEUTRAL_EXTRA          =  14
+    constant integer   bj_MAX_PLAYER_SLOTS              =  16
+    constant integer   bj_MAX_SKELETONS                 =  25
+    constant integer   bj_MAX_STOCK_ITEM_SLOTS          =  11
+    constant integer   bj_MAX_STOCK_UNIT_SLOTS          =  11
+    constant integer   bj_MAX_ITEM_LEVEL                =  10
+
+    // Ideally these would be looked up from Units/MiscData.txt,
+    // but there is currently no script functionality exposed to do that
+    constant real      bj_TOD_DAWN                      = 6.00
+    constant real      bj_TOD_DUSK                      = 18.00
+
+    // Melee game settings:
+    //   - Starting Time of Day (TOD)
+    //   - Starting Gold
+    //   - Starting Lumber
+    //   - Starting Hero Tokens (free heroes)
+    //   - Max heroes allowed per player
+    //   - Max heroes allowed per hero type
+    //   - Distance from start loc to search for nearby mines
+    //
+    constant real      bj_MELEE_STARTING_TOD            = 8.00
+    constant integer   bj_MELEE_STARTING_GOLD_V0        = 750
+    constant integer   bj_MELEE_STARTING_GOLD_V1        = 500
+    constant integer   bj_MELEE_STARTING_LUMBER_V0      = 200
+    constant integer   bj_MELEE_STARTING_LUMBER_V1      = 150
+    constant integer   bj_MELEE_STARTING_HERO_TOKENS    = 1
+    constant integer   bj_MELEE_HERO_LIMIT              = 3
+    constant integer   bj_MELEE_HERO_TYPE_LIMIT         = 1
+    constant real      bj_MELEE_MINE_SEARCH_RADIUS      = 2000
+    constant real      bj_MELEE_CLEAR_UNITS_RADIUS      = 1500
+    constant real      bj_MELEE_CRIPPLE_TIMEOUT         = 120.00
+    constant real      bj_MELEE_CRIPPLE_MSG_DURATION    = 20.00
+    constant integer   bj_MELEE_MAX_TWINKED_HEROES_V0   = 3
+    constant integer   bj_MELEE_MAX_TWINKED_HEROES_V1   = 1
+
+    // Delay between a creep's death and the time it may drop an item.
+    constant real      bj_CREEP_ITEM_DELAY              = 0.50
+
+    // Timing settings for Marketplace inventories.
+    constant real      bj_STOCK_RESTOCK_INITIAL_DELAY   = 120
+    constant real      bj_STOCK_RESTOCK_INTERVAL        = 30
+    constant integer   bj_STOCK_MAX_ITERATIONS          = 20
+
+    // Max events registered by a single "dest dies in region" event.
+    constant integer   bj_MAX_DEST_IN_REGION_EVENTS     = 64
+
+    // Camera settings
+    constant integer   bj_CAMERA_MIN_FARZ               = 100
+    constant integer   bj_CAMERA_DEFAULT_DISTANCE       = 1650
+    constant integer   bj_CAMERA_DEFAULT_FARZ           = 5000
+    constant integer   bj_CAMERA_DEFAULT_AOA            = 304
+    constant integer   bj_CAMERA_DEFAULT_FOV            = 70
+    constant integer   bj_CAMERA_DEFAULT_ROLL           = 0
+    constant integer   bj_CAMERA_DEFAULT_ROTATION       = 90
+
+    // Rescue
+    constant real      bj_RESCUE_PING_TIME              = 2.00
+
+    // Transmission behavior settings
+    constant real      bj_NOTHING_SOUND_DURATION        = 5.00
+    constant real      bj_TRANSMISSION_PING_TIME        = 1.00
+    constant integer   bj_TRANSMISSION_IND_RED          = 255
+    constant integer   bj_TRANSMISSION_IND_BLUE         = 255
+    constant integer   bj_TRANSMISSION_IND_GREEN        = 255
+    constant integer   bj_TRANSMISSION_IND_ALPHA        = 255
+    constant real      bj_TRANSMISSION_PORT_HANGTIME    = 1.50
+
+    // Cinematic mode settings
+    constant real      bj_CINEMODE_INTERFACEFADE        = 0.50
+    constant gamespeed bj_CINEMODE_GAMESPEED            = MAP_SPEED_NORMAL
+
+    // Cinematic mode volume levels
+    constant real      bj_CINEMODE_VOLUME_UNITMOVEMENT  = 0.40
+    constant real      bj_CINEMODE_VOLUME_UNITSOUNDS    = 0.00
+    constant real      bj_CINEMODE_VOLUME_COMBAT        = 0.40
+    constant real      bj_CINEMODE_VOLUME_SPELLS        = 0.40
+    constant real      bj_CINEMODE_VOLUME_UI            = 0.00
+    constant real      bj_CINEMODE_VOLUME_MUSIC         = 0.55
+    constant real      bj_CINEMODE_VOLUME_AMBIENTSOUNDS = 1.00
+    constant real      bj_CINEMODE_VOLUME_FIRE          = 0.60
+
+    // Speech mode volume levels
+    constant real      bj_SPEECH_VOLUME_UNITMOVEMENT    = 0.25
+    constant real      bj_SPEECH_VOLUME_UNITSOUNDS      = 0.00
+    constant real      bj_SPEECH_VOLUME_COMBAT          = 0.25
+    constant real      bj_SPEECH_VOLUME_SPELLS          = 0.25
+    constant real      bj_SPEECH_VOLUME_UI              = 0.00
+    constant real      bj_SPEECH_VOLUME_MUSIC           = 0.55
+    constant real      bj_SPEECH_VOLUME_AMBIENTSOUNDS   = 1.00
+    constant real      bj_SPEECH_VOLUME_FIRE            = 0.60
+
+    // Smart pan settings
+    constant real      bj_SMARTPAN_TRESHOLD_PAN         = 500
+    constant real      bj_SMARTPAN_TRESHOLD_SNAP        = 3500
+
+    // QueuedTriggerExecute settings
+    constant integer   bj_MAX_QUEUED_TRIGGERS           = 100
+    constant real      bj_QUEUED_TRIGGER_TIMEOUT        = 180.00
+
+    // Campaign indexing constants
+    constant integer   bj_CAMPAIGN_INDEX_T        = 0
+    constant integer   bj_CAMPAIGN_INDEX_H        = 1
+    constant integer   bj_CAMPAIGN_INDEX_U        = 2
+    constant integer   bj_CAMPAIGN_INDEX_O        = 3
+    constant integer   bj_CAMPAIGN_INDEX_N        = 4
+    constant integer   bj_CAMPAIGN_INDEX_XN       = 5
+    constant integer   bj_CAMPAIGN_INDEX_XH       = 6
+    constant integer   bj_CAMPAIGN_INDEX_XU       = 7
+    constant integer   bj_CAMPAIGN_INDEX_XO       = 8
+
+    // Campaign offset constants (for mission indexing)
+    constant integer   bj_CAMPAIGN_OFFSET_T       = 0
+    constant integer   bj_CAMPAIGN_OFFSET_H       = 1
+    constant integer   bj_CAMPAIGN_OFFSET_U       = 2
+    constant integer   bj_CAMPAIGN_OFFSET_O       = 3
+    constant integer   bj_CAMPAIGN_OFFSET_N       = 4
+    constant integer   bj_CAMPAIGN_OFFSET_XN      = 0
+    constant integer   bj_CAMPAIGN_OFFSET_XH      = 1
+    constant integer   bj_CAMPAIGN_OFFSET_XU      = 2
+    constant integer   bj_CAMPAIGN_OFFSET_XO      = 3
+
+    // Mission indexing constants
+    // Tutorial
+    constant integer   bj_MISSION_INDEX_T00       = bj_CAMPAIGN_OFFSET_T * 1000 + 0
+    constant integer   bj_MISSION_INDEX_T01       = bj_CAMPAIGN_OFFSET_T * 1000 + 1
+    // Human
+    constant integer   bj_MISSION_INDEX_H00       = bj_CAMPAIGN_OFFSET_H * 1000 + 0
+    constant integer   bj_MISSION_INDEX_H01       = bj_CAMPAIGN_OFFSET_H * 1000 + 1
+    constant integer   bj_MISSION_INDEX_H02       = bj_CAMPAIGN_OFFSET_H * 1000 + 2
+    constant integer   bj_MISSION_INDEX_H03       = bj_CAMPAIGN_OFFSET_H * 1000 + 3
+    constant integer   bj_MISSION_INDEX_H04       = bj_CAMPAIGN_OFFSET_H * 1000 + 4
+    constant integer   bj_MISSION_INDEX_H05       = bj_CAMPAIGN_OFFSET_H * 1000 + 5
+    constant integer   bj_MISSION_INDEX_H06       = bj_CAMPAIGN_OFFSET_H * 1000 + 6
+    constant integer   bj_MISSION_INDEX_H07       = bj_CAMPAIGN_OFFSET_H * 1000 + 7
+    constant integer   bj_MISSION_INDEX_H08       = bj_CAMPAIGN_OFFSET_H * 1000 + 8
+    constant integer   bj_MISSION_INDEX_H09       = bj_CAMPAIGN_OFFSET_H * 1000 + 9
+    constant integer   bj_MISSION_INDEX_H10       = bj_CAMPAIGN_OFFSET_H * 1000 + 10
+    constant integer   bj_MISSION_INDEX_H11       = bj_CAMPAIGN_OFFSET_H * 1000 + 11
+    // Undead
+    constant integer   bj_MISSION_INDEX_U00       = bj_CAMPAIGN_OFFSET_U * 1000 + 0
+    constant integer   bj_MISSION_INDEX_U01       = bj_CAMPAIGN_OFFSET_U * 1000 + 1
+    constant integer   bj_MISSION_INDEX_U02       = bj_CAMPAIGN_OFFSET_U * 1000 + 2
+    constant integer   bj_MISSION_INDEX_U03       = bj_CAMPAIGN_OFFSET_U * 1000 + 3
+    constant integer   bj_MISSION_INDEX_U05       = bj_CAMPAIGN_OFFSET_U * 1000 + 4
+    constant integer   bj_MISSION_INDEX_U07       = bj_CAMPAIGN_OFFSET_U * 1000 + 5
+    constant integer   bj_MISSION_INDEX_U08       = bj_CAMPAIGN_OFFSET_U * 1000 + 6
+    constant integer   bj_MISSION_INDEX_U09       = bj_CAMPAIGN_OFFSET_U * 1000 + 7
+    constant integer   bj_MISSION_INDEX_U10       = bj_CAMPAIGN_OFFSET_U * 1000 + 8
+    constant integer   bj_MISSION_INDEX_U11       = bj_CAMPAIGN_OFFSET_U * 1000 + 9
+    // Orc
+    constant integer   bj_MISSION_INDEX_O00       = bj_CAMPAIGN_OFFSET_O * 1000 + 0
+    constant integer   bj_MISSION_INDEX_O01       = bj_CAMPAIGN_OFFSET_O * 1000 + 1
+    constant integer   bj_MISSION_INDEX_O02       = bj_CAMPAIGN_OFFSET_O * 1000 + 2
+    constant integer   bj_MISSION_INDEX_O03       = bj_CAMPAIGN_OFFSET_O * 1000 + 3
+    constant integer   bj_MISSION_INDEX_O04       = bj_CAMPAIGN_OFFSET_O * 1000 + 4
+    constant integer   bj_MISSION_INDEX_O05       = bj_CAMPAIGN_OFFSET_O * 1000 + 5
+    constant integer   bj_MISSION_INDEX_O06       = bj_CAMPAIGN_OFFSET_O * 1000 + 6
+    constant integer   bj_MISSION_INDEX_O07       = bj_CAMPAIGN_OFFSET_O * 1000 + 7
+    constant integer   bj_MISSION_INDEX_O08       = bj_CAMPAIGN_OFFSET_O * 1000 + 8
+    constant integer   bj_MISSION_INDEX_O09       = bj_CAMPAIGN_OFFSET_O * 1000 + 9
+    constant integer   bj_MISSION_INDEX_O10       = bj_CAMPAIGN_OFFSET_O * 1000 + 10
+    // Night Elf
+    constant integer   bj_MISSION_INDEX_N00       = bj_CAMPAIGN_OFFSET_N * 1000 + 0
+    constant integer   bj_MISSION_INDEX_N01       = bj_CAMPAIGN_OFFSET_N * 1000 + 1
+    constant integer   bj_MISSION_INDEX_N02       = bj_CAMPAIGN_OFFSET_N * 1000 + 2
+    constant integer   bj_MISSION_INDEX_N03       = bj_CAMPAIGN_OFFSET_N * 1000 + 3
+    constant integer   bj_MISSION_INDEX_N04       = bj_CAMPAIGN_OFFSET_N * 1000 + 4
+    constant integer   bj_MISSION_INDEX_N05       = bj_CAMPAIGN_OFFSET_N * 1000 + 5
+    constant integer   bj_MISSION_INDEX_N06       = bj_CAMPAIGN_OFFSET_N * 1000 + 6
+    constant integer   bj_MISSION_INDEX_N07       = bj_CAMPAIGN_OFFSET_N * 1000 + 7
+    constant integer   bj_MISSION_INDEX_N08       = bj_CAMPAIGN_OFFSET_N * 1000 + 8
+    constant integer   bj_MISSION_INDEX_N09       = bj_CAMPAIGN_OFFSET_N * 1000 + 9
+    // Expansion Night Elf
+    constant integer   bj_MISSION_INDEX_XN00       = bj_CAMPAIGN_OFFSET_XN * 1000 + 0
+    constant integer   bj_MISSION_INDEX_XN01       = bj_CAMPAIGN_OFFSET_XN * 1000 + 1
+    constant integer   bj_MISSION_INDEX_XN02       = bj_CAMPAIGN_OFFSET_XN * 1000 + 2
+    constant integer   bj_MISSION_INDEX_XN03       = bj_CAMPAIGN_OFFSET_XN * 1000 + 3
+    constant integer   bj_MISSION_INDEX_XN04       = bj_CAMPAIGN_OFFSET_XN * 1000 + 4
+    constant integer   bj_MISSION_INDEX_XN05       = bj_CAMPAIGN_OFFSET_XN * 1000 + 5
+    constant integer   bj_MISSION_INDEX_XN06       = bj_CAMPAIGN_OFFSET_XN * 1000 + 6
+    constant integer   bj_MISSION_INDEX_XN07       = bj_CAMPAIGN_OFFSET_XN * 1000 + 7
+    constant integer   bj_MISSION_INDEX_XN08       = bj_CAMPAIGN_OFFSET_XN * 1000 + 8
+    constant integer   bj_MISSION_INDEX_XN09       = bj_CAMPAIGN_OFFSET_XN * 1000 + 9
+    constant integer   bj_MISSION_INDEX_XN10       = bj_CAMPAIGN_OFFSET_XN * 1000 + 10
+    // Expansion Human
+    constant integer   bj_MISSION_INDEX_XH00       = bj_CAMPAIGN_OFFSET_XH * 1000 + 0
+    constant integer   bj_MISSION_INDEX_XH01       = bj_CAMPAIGN_OFFSET_XH * 1000 + 1
+    constant integer   bj_MISSION_INDEX_XH02       = bj_CAMPAIGN_OFFSET_XH * 1000 + 2
+    constant integer   bj_MISSION_INDEX_XH03       = bj_CAMPAIGN_OFFSET_XH * 1000 + 3
+    constant integer   bj_MISSION_INDEX_XH04       = bj_CAMPAIGN_OFFSET_XH * 1000 + 4
+    constant integer   bj_MISSION_INDEX_XH05       = bj_CAMPAIGN_OFFSET_XH * 1000 + 5
+    constant integer   bj_MISSION_INDEX_XH06       = bj_CAMPAIGN_OFFSET_XH * 1000 + 6
+    constant integer   bj_MISSION_INDEX_XH07       = bj_CAMPAIGN_OFFSET_XH * 1000 + 7
+    constant integer   bj_MISSION_INDEX_XH08       = bj_CAMPAIGN_OFFSET_XH * 1000 + 8
+    constant integer   bj_MISSION_INDEX_XH09       = bj_CAMPAIGN_OFFSET_XH * 1000 + 9
+    // Expansion Undead
+    constant integer   bj_MISSION_INDEX_XU00       = bj_CAMPAIGN_OFFSET_XU * 1000 + 0
+    constant integer   bj_MISSION_INDEX_XU01       = bj_CAMPAIGN_OFFSET_XU * 1000 + 1
+    constant integer   bj_MISSION_INDEX_XU02       = bj_CAMPAIGN_OFFSET_XU * 1000 + 2
+    constant integer   bj_MISSION_INDEX_XU03       = bj_CAMPAIGN_OFFSET_XU * 1000 + 3
+    constant integer   bj_MISSION_INDEX_XU04       = bj_CAMPAIGN_OFFSET_XU * 1000 + 4
+    constant integer   bj_MISSION_INDEX_XU05       = bj_CAMPAIGN_OFFSET_XU * 1000 + 5
+    constant integer   bj_MISSION_INDEX_XU06       = bj_CAMPAIGN_OFFSET_XU * 1000 + 6
+    constant integer   bj_MISSION_INDEX_XU07       = bj_CAMPAIGN_OFFSET_XU * 1000 + 7
+    constant integer   bj_MISSION_INDEX_XU08       = bj_CAMPAIGN_OFFSET_XU * 1000 + 8
+    constant integer   bj_MISSION_INDEX_XU09       = bj_CAMPAIGN_OFFSET_XU * 1000 + 9
+    constant integer   bj_MISSION_INDEX_XU10       = bj_CAMPAIGN_OFFSET_XU * 1000 + 10
+    constant integer   bj_MISSION_INDEX_XU11       = bj_CAMPAIGN_OFFSET_XU * 1000 + 11
+    constant integer   bj_MISSION_INDEX_XU12       = bj_CAMPAIGN_OFFSET_XU * 1000 + 12
+    constant integer   bj_MISSION_INDEX_XU13       = bj_CAMPAIGN_OFFSET_XU * 1000 + 13
+
+    // Expansion Orc
+    constant integer   bj_MISSION_INDEX_XO00       = bj_CAMPAIGN_OFFSET_XO * 1000 + 0
+
+    // Cinematic indexing constants
+    constant integer   bj_CINEMATICINDEX_TOP      = 0
+    constant integer   bj_CINEMATICINDEX_HOP      = 1
+    constant integer   bj_CINEMATICINDEX_HED      = 2
+    constant integer   bj_CINEMATICINDEX_OOP      = 3
+    constant integer   bj_CINEMATICINDEX_OED      = 4
+    constant integer   bj_CINEMATICINDEX_UOP      = 5
+    constant integer   bj_CINEMATICINDEX_UED      = 6
+    constant integer   bj_CINEMATICINDEX_NOP      = 7
+    constant integer   bj_CINEMATICINDEX_NED      = 8
+    constant integer   bj_CINEMATICINDEX_XOP      = 9
+    constant integer   bj_CINEMATICINDEX_XED      = 10
+
+    // Alliance settings
+    constant integer   bj_ALLIANCE_UNALLIED        = 0
+    constant integer   bj_ALLIANCE_UNALLIED_VISION = 1
+    constant integer   bj_ALLIANCE_ALLIED          = 2
+    constant integer   bj_ALLIANCE_ALLIED_VISION   = 3
+    constant integer   bj_ALLIANCE_ALLIED_UNITS    = 4
+    constant integer   bj_ALLIANCE_ALLIED_ADVUNITS = 5
+    constant integer   bj_ALLIANCE_NEUTRAL         = 6
+    constant integer   bj_ALLIANCE_NEUTRAL_VISION  = 7
+
+    // Keyboard Event Types
+    constant integer   bj_KEYEVENTTYPE_DEPRESS     = 0
+    constant integer   bj_KEYEVENTTYPE_RELEASE     = 1
+
+    // Keyboard Event Keys
+    constant integer   bj_KEYEVENTKEY_LEFT         = 0
+    constant integer   bj_KEYEVENTKEY_RIGHT        = 1
+    constant integer   bj_KEYEVENTKEY_DOWN         = 2
+    constant integer   bj_KEYEVENTKEY_UP           = 3
+
+    // Transmission timing methods
+    constant integer   bj_TIMETYPE_ADD             = 0
+    constant integer   bj_TIMETYPE_SET             = 1
+    constant integer   bj_TIMETYPE_SUB             = 2
+
+    // Camera bounds adjustment methods
+    constant integer   bj_CAMERABOUNDS_ADJUST_ADD  = 0
+    constant integer   bj_CAMERABOUNDS_ADJUST_SUB  = 1
+
+    // Quest creation states
+    constant integer   bj_QUESTTYPE_REQ_DISCOVERED   = 0
+    constant integer   bj_QUESTTYPE_REQ_UNDISCOVERED = 1
+    constant integer   bj_QUESTTYPE_OPT_DISCOVERED   = 2
+    constant integer   bj_QUESTTYPE_OPT_UNDISCOVERED = 3
+
+    // Quest message types
+    constant integer   bj_QUESTMESSAGE_DISCOVERED    = 0
+    constant integer   bj_QUESTMESSAGE_UPDATED       = 1
+    constant integer   bj_QUESTMESSAGE_COMPLETED     = 2
+    constant integer   bj_QUESTMESSAGE_FAILED        = 3
+    constant integer   bj_QUESTMESSAGE_REQUIREMENT   = 4
+    constant integer   bj_QUESTMESSAGE_MISSIONFAILED = 5
+    constant integer   bj_QUESTMESSAGE_ALWAYSHINT    = 6
+    constant integer   bj_QUESTMESSAGE_HINT          = 7
+    constant integer   bj_QUESTMESSAGE_SECRET        = 8
+    constant integer   bj_QUESTMESSAGE_UNITACQUIRED  = 9
+    constant integer   bj_QUESTMESSAGE_UNITAVAILABLE = 10
+    constant integer   bj_QUESTMESSAGE_ITEMACQUIRED  = 11
+    constant integer   bj_QUESTMESSAGE_WARNING       = 12
+
+    // Leaderboard sorting methods
+    constant integer   bj_SORTTYPE_SORTBYVALUE     = 0
+    constant integer   bj_SORTTYPE_SORTBYPLAYER    = 1
+    constant integer   bj_SORTTYPE_SORTBYLABEL     = 2
+
+    // Cinematic fade filter methods
+    constant integer   bj_CINEFADETYPE_FADEIN      = 0
+    constant integer   bj_CINEFADETYPE_FADEOUT     = 1
+    constant integer   bj_CINEFADETYPE_FADEOUTIN   = 2
+
+    // Buff removal methods
+    constant integer   bj_REMOVEBUFFS_POSITIVE     = 0
+    constant integer   bj_REMOVEBUFFS_NEGATIVE     = 1
+    constant integer   bj_REMOVEBUFFS_ALL          = 2
+    constant integer   bj_REMOVEBUFFS_NONTLIFE     = 3
+
+    // Buff properties - polarity
+    constant integer   bj_BUFF_POLARITY_POSITIVE   = 0
+    constant integer   bj_BUFF_POLARITY_NEGATIVE   = 1
+    constant integer   bj_BUFF_POLARITY_EITHER     = 2
+
+    // Buff properties - resist type
+    constant integer   bj_BUFF_RESIST_MAGIC        = 0
+    constant integer   bj_BUFF_RESIST_PHYSICAL     = 1
+    constant integer   bj_BUFF_RESIST_EITHER       = 2
+    constant integer   bj_BUFF_RESIST_BOTH         = 3
+
+    // Hero stats
+    constant integer   bj_HEROSTAT_STR             = 0
+    constant integer   bj_HEROSTAT_AGI             = 1
+    constant integer   bj_HEROSTAT_INT             = 2
+
+    // Hero skill point modification methods
+    constant integer   bj_MODIFYMETHOD_ADD    = 0
+    constant integer   bj_MODIFYMETHOD_SUB    = 1
+    constant integer   bj_MODIFYMETHOD_SET    = 2
+
+    // Unit state adjustment methods (for replaced units)
+    constant integer   bj_UNIT_STATE_METHOD_ABSOLUTE = 0
+    constant integer   bj_UNIT_STATE_METHOD_RELATIVE = 1
+    constant integer   bj_UNIT_STATE_METHOD_DEFAULTS = 2
+    constant integer   bj_UNIT_STATE_METHOD_MAXIMUM  = 3
+
+    // Gate operations
+    constant integer   bj_GATEOPERATION_CLOSE      = 0
+    constant integer   bj_GATEOPERATION_OPEN       = 1
+    constant integer   bj_GATEOPERATION_DESTROY    = 2
+
+    // Game cache value types
+    constant integer   bj_GAMECACHE_BOOLEAN        = 0
+    constant integer   bj_GAMECACHE_INTEGER        = 1
+    constant integer   bj_GAMECACHE_REAL           = 2
+    constant integer   bj_GAMECACHE_UNIT           = 3
+    constant integer   bj_GAMECACHE_STRING         = 4
+
+    // Item status types
+    constant integer   bj_ITEM_STATUS_HIDDEN       = 0
+    constant integer   bj_ITEM_STATUS_OWNED        = 1
+    constant integer   bj_ITEM_STATUS_INVULNERABLE = 2
+    constant integer   bj_ITEM_STATUS_POWERUP      = 3
+    constant integer   bj_ITEM_STATUS_SELLABLE     = 4
+    constant integer   bj_ITEM_STATUS_PAWNABLE     = 5
+
+    // Itemcode status types
+    constant integer   bj_ITEMCODE_STATUS_POWERUP  = 0
+    constant integer   bj_ITEMCODE_STATUS_SELLABLE = 1
+    constant integer   bj_ITEMCODE_STATUS_PAWNABLE = 2
+
+    // Minimap ping styles
+    constant integer   bj_MINIMAPPINGSTYLE_SIMPLE  = 0
+    constant integer   bj_MINIMAPPINGSTYLE_FLASHY  = 1
+    constant integer   bj_MINIMAPPINGSTYLE_ATTACK  = 2
+
+    // Corpse creation settings
+    constant real      bj_CORPSE_MAX_DEATH_TIME    = 8.00
+
+    // Corpse creation styles
+    constant integer   bj_CORPSETYPE_FLESH         = 0
+    constant integer   bj_CORPSETYPE_BONE          = 1
+
+    // Elevator pathing-blocker destructable code
+    constant integer   bj_ELEVATOR_BLOCKER_CODE    = 'DTep'
+    constant integer   bj_ELEVATOR_CODE01          = 'DTrf'
+    constant integer   bj_ELEVATOR_CODE02          = 'DTrx'
+
+    // Elevator wall codes
+    constant integer   bj_ELEVATOR_WALL_TYPE_ALL        = 0
+    constant integer   bj_ELEVATOR_WALL_TYPE_EAST       = 1
+    constant integer   bj_ELEVATOR_WALL_TYPE_NORTH      = 2
+    constant integer   bj_ELEVATOR_WALL_TYPE_SOUTH      = 3
+    constant integer   bj_ELEVATOR_WALL_TYPE_WEST       = 4
+
+    //-----------------------------------------------------------------------
+    // Variables
+    //
+
+    // Force predefs
+    force              bj_FORCE_ALL_PLAYERS        = null
+    force array        bj_FORCE_PLAYER
+
+    integer            bj_MELEE_MAX_TWINKED_HEROES = 0
+
+    // Map area rects
+    rect               bj_mapInitialPlayableArea   = null
+    rect               bj_mapInitialCameraBounds   = null
+
+    // Utility function vars
+    integer            bj_forLoopAIndex            = 0
+    integer            bj_forLoopBIndex            = 0
+    integer            bj_forLoopAIndexEnd         = 0
+    integer            bj_forLoopBIndexEnd         = 0
+
+    boolean            bj_slotControlReady         = false
+    boolean array      bj_slotControlUsed
+    mapcontrol array   bj_slotControl
+
+    // Game started detection vars
+    timer              bj_gameStartedTimer         = null
+    boolean            bj_gameStarted              = false
+    timer              bj_volumeGroupsTimer        = CreateTimer()
+
+    // Singleplayer check
+    boolean            bj_isSinglePlayer           = false
+
+    // Day/Night Cycle vars
+    trigger            bj_dncSoundsDay             = null
+    trigger            bj_dncSoundsNight           = null
+    sound              bj_dayAmbientSound          = null
+    sound              bj_nightAmbientSound        = null
+    trigger            bj_dncSoundsDawn            = null
+    trigger            bj_dncSoundsDusk            = null
+    sound              bj_dawnSound                = null
+    sound              bj_duskSound                = null
+    boolean            bj_useDawnDuskSounds        = true
+    boolean            bj_dncIsDaytime             = false
+
+    // Triggered sounds
+    //sound              bj_pingMinimapSound         = null
+    sound              bj_rescueSound              = null
+    sound              bj_questDiscoveredSound     = null
+    sound              bj_questUpdatedSound        = null
+    sound              bj_questCompletedSound      = null
+    sound              bj_questFailedSound         = null
+    sound              bj_questHintSound           = null
+    sound              bj_questSecretSound         = null
+    sound              bj_questItemAcquiredSound   = null
+    sound              bj_questWarningSound        = null
+    sound              bj_victoryDialogSound       = null
+    sound              bj_defeatDialogSound        = null
+
+    // Marketplace vars
+    trigger            bj_stockItemPurchased       = null
+    timer              bj_stockUpdateTimer         = null
+    boolean array      bj_stockAllowedPermanent
+    boolean array      bj_stockAllowedCharged
+    boolean array      bj_stockAllowedArtifact
+    integer            bj_stockPickedItemLevel     = 0
+    itemtype           bj_stockPickedItemType
+
+    // Melee vars
+    trigger            bj_meleeVisibilityTrained   = null
+    boolean            bj_meleeVisibilityIsDay     = true
+    boolean            bj_meleeGrantHeroItems      = false
+    location           bj_meleeNearestMineToLoc    = null
+    unit               bj_meleeNearestMine         = null
+    real               bj_meleeNearestMineDist     = 0.00
+    boolean            bj_meleeGameOver            = false
+    boolean array      bj_meleeDefeated
+    boolean array      bj_meleeVictoried
+    unit array         bj_ghoul
+    timer array        bj_crippledTimer
+    timerdialog array  bj_crippledTimerWindows
+    boolean array      bj_playerIsCrippled
+    boolean array      bj_playerIsExposed
+    boolean            bj_finishSoonAllExposed     = false
+    timerdialog        bj_finishSoonTimerDialog    = null
+    integer array      bj_meleeTwinkedHeroes
+
+    // Rescue behavior vars
+    trigger            bj_rescueUnitBehavior       = null
+    boolean            bj_rescueChangeColorUnit    = true
+    boolean            bj_rescueChangeColorBldg    = true
+
+    // Transmission vars
+    timer              bj_cineSceneEndingTimer     = null
+    sound              bj_cineSceneLastSound       = null
+    trigger            bj_cineSceneBeingSkipped    = null
+
+    // Cinematic mode vars
+    gamespeed          bj_cineModePriorSpeed       = MAP_SPEED_NORMAL
+    boolean            bj_cineModePriorFogSetting  = false
+    boolean            bj_cineModePriorMaskSetting = false
+    boolean            bj_cineModeAlreadyIn        = false
+    boolean            bj_cineModePriorDawnDusk    = false
+    integer            bj_cineModeSavedSeed        = 0
+
+    // Cinematic fade vars
+    timer              bj_cineFadeFinishTimer      = null
+    timer              bj_cineFadeContinueTimer    = null
+    real               bj_cineFadeContinueRed      = 0
+    real               bj_cineFadeContinueGreen    = 0
+    real               bj_cineFadeContinueBlue     = 0
+    real               bj_cineFadeContinueTrans    = 0
+    real               bj_cineFadeContinueDuration = 0
+    string             bj_cineFadeContinueTex      = ""
+
+    // QueuedTriggerExecute vars
+    integer            bj_queuedExecTotal          = 0
+    trigger array      bj_queuedExecTriggers
+    boolean array      bj_queuedExecUseConds
+    timer              bj_queuedExecTimeoutTimer   = CreateTimer()
+    trigger            bj_queuedExecTimeout        = null
+
+    // Helper vars (for Filter and Enum funcs)
+    integer            bj_destInRegionDiesCount    = 0
+    trigger            bj_destInRegionDiesTrig     = null
+    integer            bj_groupCountUnits          = 0
+    integer            bj_forceCountPlayers        = 0
+    integer            bj_groupEnumTypeId          = 0
+    player             bj_groupEnumOwningPlayer    = null
+    group              bj_groupAddGroupDest        = null
+    group              bj_groupRemoveGroupDest     = null
+    integer            bj_groupRandomConsidered    = 0
+    unit               bj_groupRandomCurrentPick   = null
+    group              bj_groupLastCreatedDest     = null
+    group              bj_randomSubGroupGroup      = null
+    integer            bj_randomSubGroupWant       = 0
+    integer            bj_randomSubGroupTotal      = 0
+    real               bj_randomSubGroupChance     = 0
+    integer            bj_destRandomConsidered     = 0
+    destructable       bj_destRandomCurrentPick    = null
+    destructable       bj_elevatorWallBlocker      = null
+    destructable       bj_elevatorNeighbor         = null
+    integer            bj_itemRandomConsidered     = 0
+    item               bj_itemRandomCurrentPick    = null
+    integer            bj_forceRandomConsidered    = 0
+    player             bj_forceRandomCurrentPick   = null
+    unit               bj_makeUnitRescuableUnit    = null
+    boolean            bj_makeUnitRescuableFlag    = true
+    boolean            bj_pauseAllUnitsFlag        = true
+    location           bj_enumDestructableCenter   = null
+    real               bj_enumDestructableRadius   = 0
+    playercolor        bj_setPlayerTargetColor     = null
+    boolean            bj_isUnitGroupDeadResult    = true
+    boolean            bj_isUnitGroupEmptyResult   = true
+    boolean            bj_isUnitGroupInRectResult  = true
+    rect               bj_isUnitGroupInRectRect    = null
+    boolean            bj_changeLevelShowScores    = false
+    string             bj_changeLevelMapName       = null
+    group              bj_suspendDecayFleshGroup   = CreateGroup()
+    group              bj_suspendDecayBoneGroup    = CreateGroup()
+    timer              bj_delayedSuspendDecayTimer = CreateTimer()
+    trigger            bj_delayedSuspendDecayTrig  = null
+    integer            bj_livingPlayerUnitsTypeId  = 0
+    widget             bj_lastDyingWidget          = null
+
+    // Random distribution vars
+    integer            bj_randDistCount            = 0
+    integer array      bj_randDistID
+    integer array      bj_randDistChance
+
+    // Last X'd vars
+    unit               bj_lastCreatedUnit          = null
+    item               bj_lastCreatedItem          = null
+    item               bj_lastRemovedItem          = null
+    unit               bj_lastHauntedGoldMine      = null
+    destructable       bj_lastCreatedDestructable  = null
+    group              bj_lastCreatedGroup         = CreateGroup()
+    fogmodifier        bj_lastCreatedFogModifier   = null
+    effect             bj_lastCreatedEffect        = null
+    weathereffect      bj_lastCreatedWeatherEffect = null
+    terraindeformation bj_lastCreatedTerrainDeformation = null
+    quest              bj_lastCreatedQuest         = null
+    questitem          bj_lastCreatedQuestItem     = null
+    defeatcondition    bj_lastCreatedDefeatCondition = null
+    timer              bj_lastStartedTimer         = CreateTimer()
+    timerdialog        bj_lastCreatedTimerDialog   = null
+    leaderboard        bj_lastCreatedLeaderboard   = null
+    multiboard         bj_lastCreatedMultiboard    = null
+    sound              bj_lastPlayedSound          = null
+    string             bj_lastPlayedMusic          = ""
+    real               bj_lastTransmissionDuration = 0
+    gamecache          bj_lastCreatedGameCache     = null
+    unit               bj_lastLoadedUnit           = null
+    button             bj_lastCreatedButton        = null
+    unit               bj_lastReplacedUnit         = null
+    texttag            bj_lastCreatedTextTag       = null
+    lightning          bj_lastCreatedLightning     = null
+    image              bj_lastCreatedImage         = null
+    ubersplat          bj_lastCreatedUbersplat     = null
+
+    // Filter function vars
+    boolexpr           filterIssueHauntOrderAtLocBJ      = null
+    boolexpr           filterEnumDestructablesInCircleBJ = null
+    boolexpr           filterGetUnitsInRectOfPlayer      = null
+    boolexpr           filterGetUnitsOfTypeIdAll         = null
+    boolexpr           filterGetUnitsOfPlayerAndTypeId   = null
+    boolexpr           filterMeleeTrainedUnitIsHeroBJ    = null
+    boolexpr           filterLivingPlayerUnitsOfTypeId   = null
+
+    // Memory cleanup vars
+    boolean            bj_wantDestroyGroup         = false
+    //-----------------------------------------------------------------------
+    // Commander globals
+    //-----------------------------------------------------------------------
+
+    // default values
+    string language = ""  // Possible values: "" (dialog), "English", "Deutsch", "Swedish", "French", "Spanish", "Romanian", "Chinese"
+    string game_mode = "" // Possible values: "" (dialog), "commander", "no_human", "ai_only"
+
+    integer array command_number
+    integer array command_par1
+    integer array command_par2
+    integer array command_par3
+    string array command_key1
+    string array command_key2
+    string array command_key3
+    string array command_dlg1
+    integer array command_hotkey1
+    string array command_dlg2
+    integer array command_hotkey2
+    string array command_dlg3
+    integer array command_hotkey3
+    string array command_msg
+    integer command_length = 0
+
+    string array parsed_command
+    string command_prefix = "Cmd:"
+
+    button array cdlg_button
+    integer array cdlg_number
+    dialog array cdlg_dialog
+    integer cdlg_length = 0
+
+    dialog number_dialog = null
+    dialog player_dialog = null
+    dialog start_dialog = null
+    dialog root_dialog = null
+
+    integer array current_command
+    integer array current_player_par
+    integer array current_number_par
+    player array commanded_player
+
+    string array tribute_type
+    button tribute_g = null
+    button tribute_l = null
+    button tribute_give_g = null
+    button tribute_give_l = null
+    dialog tribute_dlg = null
+
+    button array tribute_dlg_button
+    integer tribute_dlg_length = 0
+
+    button array sdbn_button
+    integer array sdbn_number
+    integer sdbn_length = 0
+
+    button array pcbn_button
+    integer array pcbn_number
+    integer pcbn_length = 0
+
+    button array ndbn_button
+    integer ndbn_length = 0
+
+    dialog array dlg_dialog
+    string array dlg_string
+    integer dlg_length = 0
+
+    dialog game_start_dialog = null
+    trigger game_start_trigger = null
+    button commander_mode = null
+    button no_human_mode = null
+    button ai_only_mode = null
+
+    dialog language_dialog = null
+    trigger language_trigger = null
+    button English_button = null
+    button Deutsch_button = null
+    button Swedish_button = null
+    button French_button = null
+    button Spanish_button = null
+    button Romanian_button = null
+    button Russian_button = null
+    button Portuguese_button = null
+    button Norwegian_button = null
+    button Chinese_button = null
+
+    string chat_no_ally = ""
+    string dlghdr_choose_ally = ""
+    string dlghdr_choose_number = ""
+    string dlghdr_choose_player = ""
+    string dlghdr_game_type = ""
+    string dlghdr_root = ""
+    string dlghdr_tribute_type = ""
+    string dlghdr_tribute_amount = ""
+    string dlgbutton_cancel = ""
+    string dlgbutton_all = ""
+    string dlgbutton_gold = ""
+    string dlgbutton_lumber = ""
+    string dlgbutton_give_gold = "Give Gold"
+    string dlgbutton_give_lumber = "Give Lumber"
+    string dlgbutton_tribute = ""
+    string dlgbutton_commander = ""
+    string dlgbutton_no_human = ""
+    string dlgbutton_ai_only = ""
+
+    leaderboard color_board = null
+    
+    gamecache translation = InitGameCache("Commander.w3v")
+
 
 endglobals
 
@@ -8602,3 +9336,2572 @@ function InitGenericPlayerSlots takes nothing returns nothing
     endif
 endfunction
 
+
+
+function Parser takes string ChatMsg returns nothing
+   //Required Variables
+   local integer Last = 0
+   local integer A = 1
+   local integer I = 0
+   local integer Length = StringLength(ChatMsg)
+
+   //Pulls Words and places them each in their own Variable
+   loop
+     if (SubStringBJ(ChatMsg,A,A) == " ") then
+       set parsed_command[I] = StringCase(SubStringBJ(ChatMsg, (Last + 1), (A - 1)), true)
+       set Last = A
+       set I = I + 1
+     elseif (A == Length) then
+       set parsed_command[I] = StringCase(SubStringBJ(ChatMsg, (Last + 1), A), true)
+       set I = I + 1
+     endif
+     set A = A + 1
+     exitwhen(A>Length)
+   endloop
+   loop
+     exitwhen I > 6
+     set parsed_command[I] = ""
+     set I = I + 1
+   endloop
+
+endfunction
+
+function ColorText takes player CPlayer returns string
+  //Required Variables
+  local playercolor PColor = GetPlayerColor(CPlayer)  //Gets the Player's color
+    
+  //Finds the Nicer Text Version of the Player's Color
+  if (PColor == PLAYER_COLOR_RED) then
+    return "Red"
+  elseif (PColor == PLAYER_COLOR_BLUE) then
+    return "Blue"
+  elseif (PColor == PLAYER_COLOR_CYAN) then
+    return "Cyan"
+  elseif (PColor == PLAYER_COLOR_PURPLE) then
+    return "Purple"
+  elseif (PColor == PLAYER_COLOR_YELLOW) then
+    return "Yellow"
+  elseif (PColor == PLAYER_COLOR_ORANGE) then
+    return "Orange"
+  elseif (PColor == PLAYER_COLOR_GREEN) then
+    return "Green"
+  elseif (PColor == PLAYER_COLOR_PINK) then
+    return "Pink"
+  elseif (PColor == PLAYER_COLOR_LIGHT_GRAY) then
+    return "Light Gray"
+  elseif (PColor == PLAYER_COLOR_LIGHT_BLUE) then
+    return "Light Blue"
+  elseif (PColor == PLAYER_COLOR_AQUA) then
+    return "Aqua"
+  elseif (PColor == PLAYER_COLOR_BROWN) then
+    return "Brown"
+  endif
+  
+  //Returns text version
+  return ""
+endfunction
+
+function ColorPlayer takes string CompC returns playercolor
+
+  //Finds player color of the text color
+  if (CompC == "Red") then
+    return PLAYER_COLOR_RED
+  elseif (CompC == "Blue") then
+    return PLAYER_COLOR_BLUE
+  elseif (CompC == "Cyan") then
+    return PLAYER_COLOR_CYAN
+  elseif (CompC == "Purple") then
+    return PLAYER_COLOR_PURPLE
+  elseif (CompC == "Yellow") then
+    return PLAYER_COLOR_YELLOW
+  elseif (CompC == "Orange") then
+    return PLAYER_COLOR_ORANGE
+  elseif (CompC == "Green") then
+    return PLAYER_COLOR_GREEN
+  elseif (CompC == "Pink") then
+    return PLAYER_COLOR_PINK
+  elseif (CompC == "Light Gray") then
+    return PLAYER_COLOR_LIGHT_GRAY
+  elseif (CompC == "Light Blue") then
+    return PLAYER_COLOR_LIGHT_BLUE
+  elseif (CompC == "Aqua") then
+    return PLAYER_COLOR_AQUA
+  elseif (CompC == "Brown") then
+    return PLAYER_COLOR_BROWN
+  else
+    return null
+  endif
+
+endfunction
+
+function cs2s takes string s, playercolor c returns string
+  if c == PLAYER_COLOR_RED then
+    return "|c00ff0000"+s+"|r"
+  elseif c == PLAYER_COLOR_BLUE then
+    return "|c000000ff"+s+"|r"
+  elseif c == PLAYER_COLOR_CYAN then
+    return "|c0000ffff"+s+"|r"
+  elseif c == PLAYER_COLOR_PURPLE then
+    return "|c00660099"+s+"|r"
+  elseif c == PLAYER_COLOR_YELLOW then
+    return "|c00ffff00"+s+"|r"
+  elseif c == PLAYER_COLOR_ORANGE then
+    return "|c00ff9933"+s+"|r"
+  elseif c == PLAYER_COLOR_GREEN then
+    return "|c0000ff00"+s+"|r"
+  elseif c == PLAYER_COLOR_PINK then
+    return "|c00ff00ff"+s+"|r"
+  elseif c == PLAYER_COLOR_LIGHT_GRAY then
+    return "|c00dddddd"+s+"|r"
+  elseif c == PLAYER_COLOR_LIGHT_BLUE then
+    return "|c0033ccff"+s+"|r"
+  elseif c == PLAYER_COLOR_AQUA then
+    return "|c007fffd4"+s+"|r"
+  else //Brown
+    return "|c00660000"+s+"|r"
+  endif
+endfunction
+
+function c2s takes player p returns string
+  return cs2s(GetPlayerName(p), GetPlayerColor(p)) + ": "
+endfunction
+
+function DisplayToTP takes string msg returns nothing
+  call DisplayTimedTextToPlayer(GetTriggerPlayer(), 0, 0, 5, msg )
+endfunction
+
+function DisplayToPlayer takes player p, string msg returns nothing
+  call DisplayTimedTextToPlayer(p, 0, 0, 5, msg )
+endfunction
+
+function DisplayToAll takes string msg returns nothing
+  call DisplayTimedTextToPlayer(GetLocalPlayer(), 0, 0, 7, msg )
+endfunction
+
+function DisplayFromPlayer takes player p, string msg returns nothing
+  call DisplayToTP(c2s(p) + msg)
+endfunction
+
+function DisplayFromToPlayer takes player sp, player rp, string msg returns nothing
+  call DisplayToPlayer(rp, c2s(sp) + msg)
+endfunction
+
+function DisplayFromDlg takes string msg returns nothing
+  if msg == "" or commanded_player[GetPlayerId(GetTriggerPlayer())] == Player(14) then
+    return
+  endif
+  if GetTriggerPlayer() != null then
+    if commanded_player[GetPlayerId(GetTriggerPlayer())] != null then
+      call DisplayFromToPlayer(commanded_player[GetPlayerId(GetTriggerPlayer())], GetTriggerPlayer(), msg)
+    else
+      call DisplayToPlayer(commanded_player[GetPlayerId(GetTriggerPlayer())], msg)
+    endif
+  else
+    call DisplayToAll(msg)
+  endif
+endfunction
+
+function SyncInteger takes player sync_p, integer unsynced returns integer
+  local integer array source_int // the bits of the unsynced integer are stored in there
+  local integer array target_int // the bits of the synced integer are stored in there
+  local unit array sel_unit // the units used for the selection
+  local integer i = 1
+  local integer j = 0
+  local integer sum = unsynced
+  local group old_selection = CreateGroup()
+  local unit u = null
+  local integer bits_per_selection = 8 // that many bits are sent per selection
+  local integer selection_num = 2 // that many times a selection is done
+  local integer bits_number = selection_num * bits_per_selection // number of bits of integer used
+  local timer t = CreateTimer()
+
+
+  if bj_isSinglePlayer then
+    return unsynced
+  endif
+
+  // separate integer in bits
+  if sum < 0 then
+    set source_int[0] = 1
+    set sum = -sum
+  else
+    set source_int[0] = 0
+  endif
+  loop
+    exitwhen i >= bits_number
+    set source_int[i] = ModuloInteger(sum, 2)
+    set sum = sum / 2
+    set i = i + 1
+  endloop
+
+  // create units to select
+  set i = 0
+  loop
+    exitwhen i >= bits_per_selection
+    set sel_unit[i] = CreateUnitAtLoc( sync_p, 'nshf', GetPlayerStartLocationLoc(sync_p), bj_UNIT_FACING )
+    set i = i + 1
+  endloop
+
+  // save old selection
+  call SyncSelections()
+  call GroupEnumUnitsSelected(old_selection, sync_p, null)
+
+  // send the bits by selection
+  set i = 0
+  loop
+    exitwhen i >= selection_num
+
+    // write information
+    if GetLocalPlayer() == sync_p then
+      set j = 0
+      call ClearSelection()
+      loop
+        exitwhen j >= bits_per_selection
+        if source_int[i*bits_per_selection + j] == 0 then
+          call SelectUnit(sel_unit[j], false)
+        else
+          call SelectUnit(sel_unit[j], true)
+        endif
+        set j = j + 1
+      endloop
+    endif
+
+    // read information
+    call TimerStart(t, 1, false, null)  // prevent wait bug
+    loop
+      exitwhen TimerGetRemaining(t) <= 0
+      call TriggerSleepAction(0.5)
+    endloop
+    call SyncSelections()
+    set j = 0
+    loop
+      exitwhen j >= bits_per_selection
+      if IsUnitSelected(sel_unit[j], sync_p) then
+        set target_int[i*bits_per_selection + j] = 1
+      else
+        set target_int[i*bits_per_selection + j] = 0
+      endif
+      set j = j + 1
+    endloop
+
+    set i = i + 1
+  endloop
+
+  // restore selection
+  if GetLocalPlayer() == sync_p then
+    call ClearSelection()
+    loop
+      set u = FirstOfGroup(old_selection)
+      exitwhen u == null
+      call SelectUnit(u, true)
+      call GroupRemoveUnit(old_selection, u)
+    endloop
+  endif
+  call SyncSelections()
+
+  // remove units to select
+  set i = 0
+  loop
+    exitwhen i >= bits_per_selection
+    call RemoveUnit(sel_unit[i])
+    set i = i + 1
+  endloop
+
+  // rebuild integer
+  set i = bits_number - 1
+  set sum = 0
+  loop
+    exitwhen i < 1
+    set sum = 2 * sum + target_int[i]
+    set i = i - 1
+  endloop
+  if target_int[0] != 0 then
+    set sum = -sum
+  endif
+
+
+  return sum
+
+endfunction
+
+function Convert2Player takes string Comp, boolean all_allowed returns player
+  //Required Variables
+  local integer j = 0
+  local playercolor CColor = ColorPlayer(Comp)  //Gets the player color
+
+  if Comp == "All" then
+    if all_allowed then
+      return Player(14)
+    else
+      call DisplayToTP("ERROR, All is not allowed here" )
+      return null
+    endif
+  endif
+
+  //Makes Sure color was typed Correctly
+  if (CColor == null) then
+    //Makes sure number is 0 or bigger and 11 or smaller
+    if (S2I(Comp) >= 0) and (S2I(Comp) <= 11) then
+      return Player(S2I(Comp))
+    else
+      call DisplayToTP("ERROR, you mistyped the player id" )
+      return null
+    endif
+  endif
+  
+  //Compares the color until we get a match then stores that player
+  loop
+    exitwhen(CColor == GetPlayerColor(Player(j)))
+    set j = j + 1
+    if (j > 12) then
+      call DisplayToTP("ERROR, you mistyped the player Color or Command word." )
+      return null
+    endif
+  endloop
+
+  //Returns player
+  return Player(j)
+
+endfunction
+
+function GetPlayersMatchingCode takes nothing returns boolean
+    return ( GetPlayerSlotState(GetFilterPlayer()) == PLAYER_SLOT_STATE_PLAYING )
+endfunction
+
+function ForForceCode takes nothing returns nothing
+    call LeaderboardAddItemBJ(GetEnumPlayer(), color_board, GetPlayerName(GetEnumPlayer()), 0 )
+    call LeaderboardSetPlayerItemLabelBJ(GetEnumPlayer(), color_board, ColorText(GetEnumPlayer()))
+    call LeaderboardSetPlayerItemValueBJ(GetEnumPlayer(), color_board, GetPlayerId(GetEnumPlayer()))
+endfunction
+
+function CreateBoard takes nothing returns nothing
+  //Required Variables
+  local integer j = 0
+
+  //Creates Colorboard
+  set color_board =CreateLeaderboardBJ( GetPlayersAll(), "Colorboard" ) //Creates board
+  //Adds all player to Colorboard
+  call ForForce( GetPlayersMatching(Condition(function GetPlayersMatchingCode)), function ForForceCode )
+  
+  //Displays the Colorboard
+  call LeaderboardDisplay(color_board, false)
+
+endfunction
+
+function ShowBoard takes nothing returns nothing
+  call LeaderboardDisplay(color_board, not IsLeaderboardDisplayed(color_board))
+endfunction
+
+function DisplayHelpToPlayer takes player p, string msg returns nothing
+  if msg == "PAUSE" then
+    call TriggerSleepAction( 15.00 )
+  else
+    call DisplayTimedTextToPlayer(p, 0, 0, 15, msg)
+  endif
+endfunction
+
+function Helpin takes nothing returns nothing
+  local player p = GetTriggerPlayer()
+  call DisplayHelpToPlayer(p, "Commander Help")
+  call DisplayHelpToPlayer(p, "Here are the Commands for The Commander")
+  call DisplayHelpToPlayer(p, "ESC")
+  call DisplayHelpToPlayer(p, "-Starts dialog command")
+  call DisplayHelpToPlayer(p, "Cmd: Help")
+  call DisplayHelpToPlayer(p, "-Displays Help")
+  call DisplayHelpToPlayer(p, "Cmd: Board")
+  call DisplayHelpToPlayer(p, "-Displays Colorboard")
+  call DisplayHelpToPlayer(p, "Cmd: Chatter")
+  call DisplayHelpToPlayer(p, "-Turns On/Off the Chat messages your allies will send you.")
+  call DisplayHelpToPlayer(p, "PAUSE")
+  call DisplayHelpToPlayer(p, "Here are the Commands for Ally use")
+  call DisplayHelpToPlayer(p, "Cmd: (Ally) Trib (Amount) <G or L>")
+  call DisplayHelpToPlayer(p, "-Using this command you can have your computer ally donate resources to you.")
+  call DisplayHelpToPlayer(p, "Cmd: (Ally) Cancel <All, Attack, Build, or Queue>")
+  call DisplayHelpToPlayer(p, "-Cancels either All, Attack, Build or Queued Commands given so far.")
+  call DisplayHelpToPlayer(p, "Cmd: (Ally) Stop")
+  call DisplayHelpToPlayer(p, "-Stops the current command.")
+  call DisplayHelpToPlayer(p, "PAUSE")
+  call DisplayHelpToPlayer(p, "Here are some more Commands for Ally use")
+  call DisplayHelpToPlayer(p, "Cmd: (Ally) No <Attacks, Creep, or Players>")
+  call DisplayHelpToPlayer(p, "-Stops the computer from attacking either Anything, Creeps, or Players.")
+  call DisplayHelpToPlayer(p, "Cmd: (Ally) Build (How Many) <A2A, A2G, G2A, or G2G>")
+  call DisplayHelpToPlayer(p, "-This will cause the ally to make sure that they have that many of the certain unit type.")
+  call DisplayHelpToPlayer(p, "Cmd: (Ally) Attack <Here, Select, or (Enemy)>                                 ")
+  call DisplayHelpToPlayer(p, "-Will cause that ally either to attack/guard the center of your current screen position or Selected Computer.")
+  call DisplayHelpToPlayer(p, "PAUSE")
+  call DisplayHelpToPlayer(p, "Here are the Queue Commands")
+  call DisplayHelpToPlayer(p, "Cmd: (Ally) Que <Start or Restart>")
+  call DisplayHelpToPlayer(p, "-Starts the Queued Commands or REstarts them.")
+  call DisplayHelpToPlayer(p, "Cmd: (Ally) Que <Pause or Unpause>")
+  call DisplayHelpToPlayer(p, "-Pauses or Unpauses the Queued Commands.")
+  call DisplayHelpToPlayer(p, "Cmd: (Ally) Que Undo")
+  call DisplayHelpToPlayer(p, "-Removes the last Queued Command.")
+  call DisplayHelpToPlayer(p, "Cmd: (Ally) Que Attack <Here or Select>")
+  call DisplayHelpToPlayer(p, "-Will Queue the Current Screen Position or Selected Unit, to be started later.")
+endfunction
+
+function MapInit takes nothing returns nothing
+
+  //Displays the Leaderboard
+  call CreateBoard()
+
+  //Display Commander Message
+  if false then
+  elseif language == "English" then
+    call DisplayToAll("|c0000ffffThis map contains the Commander and AMAI.|r")
+    call DisplayToAll("|c0000ffffType 'Cmd: Help' to get Help.|r")
+    call DisplayToAll("|c0000ffffPress ESC for a dialog of commands.|r")
+    call DisplayToAll("|c0000ffffGoto www.wc3campaigns.net forums to find updates and more|r")
+    call DisplayToAll("|c0000ffffThe AMAI homepage is http://www.wc3campaigns.net/amai/|r")
+    call DisplayToAll("|c0000ffffAIAndy, Zalamander, DKSlayer and Strategy Master|r")
+  elseif language == "Deutsch" then
+    call DisplayToAll("|c0000ffffDiese Karte enthält den Commander und AMAI.|r")
+    call DisplayToAll("|c0000ffffSchreibe 'Cmd: Help', um Hilfe zu erhalten.|r")
+    call DisplayToAll("|c0000ffffDruecke ESC fuer den Befehlsdialog.|r")
+    call DisplayToAll("|c0000ffffBesuche www.wc3campaigns.net Foren fuer Updates und mehr|r")
+    call DisplayToAll("|c0000ffffAMAI homepage ist http://www.wc3campaigns.net/amai|r")
+    call DisplayToAll("|c0000ffffAIAndy, Zalamander und DKSlayer|r")
+  elseif language == "Swedish" then
+    call DisplayToAll("|c0000ffffDenna kartan använder AMAI.|r")
+    call DisplayToAll("|c0000ffffSkriv 'Cmd: Help' för att få hjälp.|r")
+    call DisplayToAll("|c0000ffffTryck ESC för meny.|r")
+    call DisplayToAll("|c0000ffffBesök AMAIs hemsida http://www.wc3campaigns.net/amai för uppdateringar.|r")
+    call DisplayToAll("|c0000ffffAIAndy, Zalamander och DKSlayer|r")
+  elseif language == "French" then
+    call DisplayToAll("|c0000ffffCette carte contient the Commander and AMAI.|r")
+    call DisplayToAll("|c0000ffffTape 'Cmd: Help' pour obtenir l'aide(help).|r")
+    call DisplayToAll("|c0000ffffAppuie sur ESC pour la commande de dialogue.|r")
+    call DisplayToAll("|c0000ffffva sur les forums de www.wc3campaigns.net pour les futures versions et plus|r")
+    call DisplayToAll("|c0000ffffAMAI sur internet a l'adresse http://www.wc3campaigns.net/amai|r")
+    call DisplayToAll("|c0000ffffAIAndy, Zalamander and DKSlayer|r")
+  elseif language == "Spanish" then
+    call DisplayToAll("|c0000ffffEste mapa contiene al comandante y a AMAI.|r")
+    call DisplayToAll("|c0000ffffEscribe 'Cmd: Help' para conseguir ayuda.|r")
+    call DisplayToAll("|c0000ffffPresiona ESC para un cuadro de comandos.|r")
+    call DisplayToAll("|c0000ffffVisita los foros de www.wc3campaigns.net para encontrar actualizaciones y mucho mas.|r")
+    call DisplayToAll("|c0000ffffLa pagina de AMAI es http://www.wc3campaigns.net/amai|r")
+    call DisplayToAll("|c0000ffffAIAndy, Zalamander y DKSlayer|r")
+  elseif language == "Romanian" then
+    call DisplayToAll("|c0000ffffAceasta harta contine Commander si AMAI.|r")
+    call DisplayToAll("|c0000ffffTasteaza 'Cmd: Help' pentru Help.|r")
+    call DisplayToAll("|c0000ffffApasa ESC comenzile dialog.|r")
+    call DisplayToAll("|c0000ffffDute la www.wc3campaigns.net forums pentru updates si  multe altele|r")
+    call DisplayToAll("|c0000ffffAMAI homepage este http://www.wc3campaigns.net/amai|r")
+    call DisplayToAll("|c0000ffffAIAndy, Zalamander si DKSlayer|r")
+  elseif language == "Russian" then
+    call DisplayToAll("|c0000ffffНа этой карте установлен AMAI и Commander.|r")
+    call DisplayToAll("|c0000ffffНаберите 'Cmd: Help' для вызова помощи. |r")
+    call DisplayToAll("|c0000ffffНажмите ESC для вызова диалога команд.|r")
+    call DisplayToAll("|c0000ffffНа форумах www.wc3campaigns.net вы можете найти обновления и все такое.|r")
+    call DisplayToAll("|c0000ffffДомашняя страница AMAI: http://www.wc3campaigns.net/amai|r")
+    call DisplayToAll("|c0000ffffАвторы: AIAndy, Zalamander и DKSlayer|r")
+    call DisplayToAll("|c0000ffff|r")
+    call DisplayToAll("|c0000ffffНа русский язык перевели: Raz и Darkloke|r")
+    call DisplayToAll("|c0000ffffhttp://www.blizzard.ru|r")
+  elseif language == "Portuguese" then
+    call DisplayToAll("|c0000ffffEste mapa contém o Comandante e o AMAI.|r")
+    call DisplayToAll("|c0000ffffDigite 'Cmd: Help' para ter ajuda.|r")
+    call DisplayToAll("|c0000ffffPressione ESC para a caixa de comandos.|r")
+    call DisplayToAll("|c0000ffffVá para o fórum www.wc3campaigns.net para baixar atualizações e mais.|r")
+    call DisplayToAll("|c0000ffffA página do AMAI é http://www.wc3campaigns.net/amai|r")
+    call DisplayToAll("|c0000ffffAIAndy, Zalamander e DKSlayer|r")
+  elseif language == "Norwegian" then
+    call DisplayToAll("|c0000ffffDette brettet utnytter AMAI.|r")
+    call DisplayToAll("|c0000ffffSkriv 'Cmd: Help' for å få hjelp.|r")
+    call DisplayToAll("|c0000ffffTrykk ESC for meny.|r")
+    call DisplayToAll("|c0000ffffBesøk www.wc3campaigns.net forum for oppdateringer|r")
+    call DisplayToAll("|c0000ffffAMAI hjemmeside http://www.wc3campaigns.net/amai|r")
+    call DisplayToAll("|c0000ffffAIAndy, Zalamander og DKSlayer|r")
+  elseif language == "Chinese" then
+    call DisplayToAll("|c0000ffffï»¿è¿å¼ å°å¾åå«AMAIåæºè½ææ¥æ¨¡åï¼|r")
+    call DisplayToAll("|c0000ffffè¾å¥CMD:Helpæ¥çå¸®å©ä¿¡æ¯?|r")
+    call DisplayToAll("|c0000ffffæ²å» ESC æå¼å¸ä»¤å¯¹è¯ç­?|r")
+    call DisplayToAll("|c0000ffffå®æ¹ç½ç«?http://www.wc3campaigns.net/amai|r")
+    call DisplayToAll("|c0000ffffç±Sheeryiroï¼æ­¦æ±å¤§å­¦ï¼æ±åå®æ|r")
+  endif
+
+endfunction
+
+function TributeGold takes player Commander, player Comp, integer res_amount returns nothing
+  if res_amount < 0 then
+    set res_amount = -res_amount
+    if GetPlayerState(Commander, PLAYER_STATE_RESOURCE_GOLD) >= res_amount then
+      call SetPlayerState(Comp, PLAYER_STATE_RESOURCE_GOLD, GetPlayerState(Comp, PLAYER_STATE_RESOURCE_GOLD) + res_amount)
+      call SetPlayerState(Commander, PLAYER_STATE_RESOURCE_GOLD, GetPlayerState(Commander, PLAYER_STATE_RESOURCE_GOLD) - res_amount)
+      call DisplayFromToPlayer(Comp, Commander, "Gift of "+ I2S(res_amount) + " Gold has been received. Thanks.")
+    //You don't have enough Gold to share
+    else
+      call DisplayFromToPlayer(Comp, Commander, "Sorry, you don't have enough Gold.")
+    endif
+  elseif GetPlayerState(Comp, PLAYER_STATE_RESOURCE_GOLD) >= res_amount then
+    call SetPlayerState(Comp, PLAYER_STATE_RESOURCE_GOLD, GetPlayerState(Comp, PLAYER_STATE_RESOURCE_GOLD) - res_amount)
+    call SetPlayerState(Commander, PLAYER_STATE_RESOURCE_GOLD, GetPlayerState(Commander, PLAYER_STATE_RESOURCE_GOLD) + res_amount)
+    call DisplayFromToPlayer(Comp, Commander, "Tribute of "+ I2S(res_amount) + " Gold is complete.")
+  //I don't have enough Gold to share
+  else
+    call DisplayFromToPlayer(Comp, Commander, "Sorry, I don't have enough Gold.")
+  endif
+endfunction
+
+function TributeWood takes player Commander, player Comp, integer res_amount returns nothing
+  if res_amount < 0 then
+    set res_amount = -res_amount
+    if GetPlayerState(Commander, PLAYER_STATE_RESOURCE_LUMBER) >= res_amount then
+      call SetPlayerState(Comp, PLAYER_STATE_RESOURCE_LUMBER, GetPlayerState(Comp, PLAYER_STATE_RESOURCE_LUMBER) + res_amount)
+      call SetPlayerState(Commander, PLAYER_STATE_RESOURCE_LUMBER, GetPlayerState(Commander, PLAYER_STATE_RESOURCE_LUMBER) - res_amount)
+      call DisplayFromToPlayer(Comp, Commander, "Gift of "+ I2S(res_amount) + " Lumber has been received. Thanks.")
+    //You don't have enough Lumber to share
+    else
+      call DisplayFromToPlayer(Comp, Commander, "Sorry, you don't have enough Lumber.")
+    endif
+  elseif GetPlayerState(Comp, PLAYER_STATE_RESOURCE_LUMBER) >= res_amount then
+    call SetPlayerState(Comp, PLAYER_STATE_RESOURCE_LUMBER, GetPlayerState(Comp, PLAYER_STATE_RESOURCE_LUMBER) - res_amount)
+    call SetPlayerState(Commander, PLAYER_STATE_RESOURCE_LUMBER, GetPlayerState(Commander, PLAYER_STATE_RESOURCE_LUMBER) + res_amount)
+    call DisplayFromToPlayer(Comp, Commander, "Tribute of "+ I2S(res_amount) + " Lumber is complete.")
+  //I don't have enough Lumber to share
+  else
+    call DisplayFromToPlayer(Comp, Commander, "Sorry, I don't have enough Lumber.")
+  endif
+
+endfunction
+
+function TributeGoldFromAll takes player Commander, integer res_amount returns nothing
+  local integer i = 0
+  loop
+    exitwhen i >= 12
+    if IsPlayerAlly(Commander, Player(i)) and GetPlayerController(Player(i)) == MAP_CONTROL_COMPUTER then
+      call TributeGold(Commander, Player(i),res_amount)
+    endif
+    set i = i + 1
+  endloop
+endfunction
+
+function TributeWoodFromAll takes player Commander, integer res_amount returns nothing
+  local integer i = 0
+  loop
+    exitwhen i >= 12
+    if IsPlayerAlly(Commander,Player(i)) and GetPlayerController(Player(i)) == MAP_CONTROL_COMPUTER then
+      call TributeWood(Commander, Player(i),res_amount)
+    endif
+    set i = i + 1
+  endloop
+endfunction
+
+function Tribute takes player Commander, player Comp, string LorG, string ResAmount returns nothing
+
+  //Player wants Gold
+  if (LorG == "G") or (LorG == "GiveG") or (LorG == "Gold") then
+    if LorG == "GiveG" then
+      set ResAmount = "-" + ResAmount
+    endif
+    if Comp == Player(14) then
+      call TributeGoldFromAll(Commander, S2I(ResAmount))
+    else
+      call TributeGold(Commander, Comp, S2I(ResAmount))
+    endif
+  //Player wants Lumber
+  elseif (LorG == "L") or (LorG == "GiveL") or (LorG == "Lumber") then
+    if LorG == "GiveL" then
+      set ResAmount = "-" + ResAmount
+    endif
+    if Comp == Player(14) then
+      call TributeWoodFromAll(Commander, S2I(ResAmount))
+    else
+      call TributeWood(Commander, Comp, S2I(ResAmount))
+    endif
+  //Didn't type L or G
+  else
+    call DisplayToPlayer(Commander, "Sorry, you mistyped your Tribute.")
+  endif
+endfunction
+
+function GetParValue takes integer par returns integer
+  local player p = null
+  if par == -1 then
+    return 0
+  elseif par == -30 then
+    return SyncInteger(GetTriggerPlayer(), R2I(GetCameraTargetPositionX()))
+  elseif par == -31 then
+    return SyncInteger(GetTriggerPlayer(), R2I(GetCameraTargetPositionY()))
+  elseif par == -40 then
+    return GetPlayerId(GetTriggerPlayer())
+  elseif par < -100 then
+    set p = Convert2Player(parsed_command[-(par + 100)], false)
+    if p == null then
+      return -1000000
+    else
+      return GetPlayerId(p)
+    endif
+  elseif par < 0 then
+    return S2I(parsed_command[-par])
+  else
+    return par
+  endif
+endfunction
+
+function ExecuteCommand takes player Comp, integer number returns nothing
+  local integer cn = GetParValue(command_number[number])
+  local integer par1 = GetParValue(command_par1[number])
+  local integer par2 = GetParValue(command_par2[number])
+  local integer par3 = GetParValue(command_par3[number])
+  
+  if cn == -1000000 or par1 == -1000000 or par2 == -1000000 or par3 == -1000000 then
+    return
+  endif
+
+  if command_par2[number] != -1 then  
+    call CommandAI(Comp, par2, par3)
+  endif
+  if command_number[number] != -1 then
+    call CommandAI(Comp, cn, par1)
+  endif
+
+  call DisplayFromPlayer(Comp, command_msg[number])
+endfunction
+
+function ExecuteCommandForAll takes integer number returns nothing
+  local integer i = 0
+  loop
+    exitwhen i >= 12
+    if (IsPlayerAlly(GetTriggerPlayer(),Player(i))) and GetPlayerController(Player(i)) == MAP_CONTROL_COMPUTER then
+      call ExecuteCommand(Player(i), number)
+    endif
+    set i = i + 1
+  endloop
+endfunction
+
+function GetDlgParValue takes integer par returns integer
+  if par == -1 then
+    return 0
+  elseif par == -30 then
+    return SyncInteger(GetTriggerPlayer(), R2I(GetCameraTargetPositionX()))
+  elseif par == -31 then
+    return SyncInteger(GetTriggerPlayer(), R2I(GetCameraTargetPositionY()))
+  elseif par == -40 then
+    return GetPlayerId(GetTriggerPlayer())
+  elseif par < -100 then
+    return current_player_par[GetPlayerId(GetTriggerPlayer())]
+  elseif par < 0 then
+    return current_number_par[GetPlayerId(GetTriggerPlayer())]
+  else
+    return par
+  endif
+endfunction
+
+function ExecuteDlgCommand takes player Comp, integer number returns nothing
+  local integer cn = GetDlgParValue(command_number[number])
+  local integer par1 = GetDlgParValue(command_par1[number])
+  local integer par2 = GetDlgParValue(command_par2[number])
+  local integer par3 = GetDlgParValue(command_par3[number])
+  
+  if command_par2[number] != -1 then  
+    call CommandAI(Comp, par2, par3)
+  endif
+  if command_number[number] != -1 then
+    call CommandAI(Comp, cn, par1)
+  endif
+
+  call DisplayFromDlg(command_msg[number])
+endfunction
+
+function ExecuteDlgCommandForAll takes integer number returns nothing
+  local integer i = 0
+  loop
+    exitwhen i >= 12
+    if IsPlayerAlly(GetTriggerPlayer(),Player(i)) and GetPlayerController(Player(i)) == MAP_CONTROL_COMPUTER then
+      set commanded_player[GetPlayerId(GetTriggerPlayer())] = Player(i)
+      call ExecuteDlgCommand(Player(i), number)
+    endif
+    set i = i + 1
+  endloop
+endfunction
+
+function ExecuteDialogCommand takes player Comp, integer number returns nothing
+  if commanded_player[GetPlayerId(GetTriggerPlayer())] == Player(14) then
+    call ExecuteDlgCommandForAll(number)
+  else
+    call ExecuteDlgCommand(Comp, number)
+  endif
+endfunction
+
+function FindCommand takes nothing returns integer
+  local integer i = 0
+  loop
+    exitwhen i >= command_length
+    if command_key1[i] == "" or command_key1[i] == parsed_command[2] then
+      if command_key2[i] == "" or command_key2[i] == parsed_command[3] then
+        exitwhen command_key3[i] == "" or command_key3[i] == parsed_command[4]
+      endif
+    endif
+    set i = i + 1
+  endloop
+
+  if i >= command_length then
+    return -1
+  else
+    return i
+  endif
+
+endfunction
+
+function Commander takes nothing returns nothing
+  local player Comp = null
+  local string ChatMsg = GetEventPlayerChatString()
+  local integer cn = 0
+
+  call Parser(ChatMsg)
+
+  if parsed_command[1] == "HELP" then
+    call Helpin()
+    return
+  endif
+
+  if parsed_command[1] == "BOARD" then
+    call ShowBoard()
+    return
+  endif
+
+  set Comp = Convert2Player(parsed_command[1], true)
+  if Comp == null then
+    call DisplayToTP("You have not specified a valid player.")
+    return
+  elseif Comp != Player(14) then
+    if GetPlayerController(Comp) != MAP_CONTROL_COMPUTER then
+      call DisplayToTP("You have not specified a computer.")
+      return
+    elseif not IsPlayerAlly(GetTriggerPlayer(), Comp) then
+      call DisplayFromPlayer(Comp, chat_no_ally)
+      return
+    endif
+  endif
+
+  if parsed_command[2] == "TRIBUTE" or parsed_command[2] == "TRIB" then
+    call Tribute(GetTriggerPlayer(), Comp, parsed_command[4], parsed_command[3])
+    return
+  endif
+
+  set cn = FindCommand()
+
+  if cn < 0 then
+    call DisplayFromPlayer(Comp, "I do not know that command.")
+    return
+  endif
+
+  if Comp == Player(14) then
+    call ExecuteCommandForAll(cn)
+  else
+    call ExecuteCommand(Comp, cn)
+  endif
+
+endfunction
+
+function DialogCommander takes nothing returns nothing
+  set commanded_player[GetPlayerId(GetTriggerPlayer())] = null
+  call DialogDisplay(GetTriggerPlayer(), start_dialog, true)
+endfunction
+
+function DialogResponse takes nothing returns nothing
+  local button b = GetClickedButton()
+  local integer i = 0
+  local dialog d = null
+  local integer cn = 0
+
+  loop
+    if i >= cdlg_length then
+      return
+    endif
+    exitwhen b == cdlg_button[i]
+    set i = i + 1
+  endloop
+
+  set d = cdlg_dialog[i]
+  set cn = cdlg_number[i]
+
+  if d != null then
+    set current_command[GetPlayerId(GetTriggerPlayer())] = cn
+    call DialogDisplay(GetTriggerPlayer(), d, true)
+    return
+  endif
+
+  call ExecuteDialogCommand(commanded_player[GetPlayerId(GetTriggerPlayer())], cn)
+endfunction
+
+function StartDialogResponse takes nothing returns nothing
+  local integer i = 0
+  local button b = GetClickedButton()
+  loop
+    if i >= sdbn_length then
+      return
+    endif
+    exitwhen sdbn_button[i] == b
+    set i = i + 1
+  endloop
+  set commanded_player[GetPlayerId(GetTriggerPlayer())] = Player(sdbn_number[i])
+  if commanded_player[GetPlayerId(GetTriggerPlayer())] != Player(14) and (not IsPlayerAlly(GetTriggerPlayer(), commanded_player[GetPlayerId(GetTriggerPlayer())])) then
+    call DisplayFromDlg(chat_no_ally)
+    return
+  endif
+  call DialogDisplay(GetTriggerPlayer(), root_dialog, true)
+endfunction
+
+function PlayerDialogResponse takes nothing returns nothing
+  local integer i = 0
+  local button b = GetClickedButton()
+  loop
+    if i >= pcbn_length then
+      return
+    endif
+    exitwhen pcbn_button[i] == b
+    set i = i + 1
+  endloop
+  set current_player_par[GetPlayerId(GetTriggerPlayer())] = pcbn_number[i]
+  call ExecuteDialogCommand(commanded_player[GetPlayerId(GetTriggerPlayer())], current_command[GetPlayerId(GetTriggerPlayer())])
+endfunction
+
+function NumberDialogResponse takes nothing returns nothing
+  local integer i = 0
+  local button b = GetClickedButton()
+  loop
+    if i >= ndbn_length then
+      return
+    endif
+    exitwhen ndbn_button[i] == b
+    set i = i + 1
+  endloop
+  set current_number_par[GetPlayerId(GetTriggerPlayer())] =i
+  call ExecuteDialogCommand(commanded_player[GetPlayerId(GetTriggerPlayer())], current_command[GetPlayerId(GetTriggerPlayer())])
+endfunction
+
+function TributeDialogResponse takes nothing returns nothing
+  local button b = GetClickedButton()
+  local integer pid = GetPlayerId(GetTriggerPlayer())
+  if b == tribute_g then
+    set tribute_type[pid] = "G"
+  elseif b == tribute_l then
+    set tribute_type[pid] = "L"
+  elseif b == tribute_give_g then
+    set tribute_type[pid] = "GiveG"
+  elseif b == tribute_give_l then
+    set tribute_type[pid] = "GiveL"
+  else
+    return
+  endif
+  call DialogDisplay(GetTriggerPlayer(), tribute_dlg, true)
+endfunction
+
+function TributeAmountDialogResponse takes nothing returns nothing
+  local integer i = 0
+  local button b = GetClickedButton()
+  local string tribute_amount = null
+  local integer pid = GetPlayerId(GetTriggerPlayer())
+  loop
+    if i >= tribute_dlg_length then
+      return
+    endif
+    exitwhen tribute_dlg_button[i] == b
+    set i = i + 1
+  endloop
+  set tribute_amount = I2S((i+1) * 100)
+  call Tribute(GetTriggerPlayer(), commanded_player[pid], tribute_type[pid], tribute_amount)
+endfunction
+
+function Translation takes string s returns string
+  if HaveStoredString(translation, language, s) then
+    return GetStoredString(translation, language, s)
+  else
+    return s
+  endif
+endfunction
+
+function RegisterCommand takes string c_key1, string c_key2, string c_key3, integer c_number, integer c_par1, integer c_par2, integer c_par3, string c_dlg1, integer c_hk1, string c_dlg2, integer c_hk2, string c_dlg3, integer c_hk3, string c_msg returns nothing
+  set command_key1[command_length] = StringCase(c_key1, true)
+  set command_key2[command_length] = StringCase(c_key2, true)
+  set command_key3[command_length] = StringCase(c_key3, true)
+  set command_number[command_length] = c_number
+  set command_par1[command_length] = c_par1
+  set command_par2[command_length] = c_par2
+  set command_par3[command_length] = c_par3
+  set command_dlg1[command_length] = Translation(c_dlg1)
+  set command_hotkey1[command_length] = c_hk1
+  set command_dlg2[command_length] = Translation(c_dlg2)
+  set command_hotkey2[command_length] = c_hk2
+  set command_dlg3[command_length] = Translation(c_dlg3)
+  set command_hotkey3[command_length] = c_hk3
+  set command_msg[command_length] = Translation(c_msg)
+  set command_length = command_length + 1
+endfunction
+
+function RegisterCommands takes nothing returns nothing
+  call RegisterCommand("CHATTER", "", "", 50, -1, -1, -1, "AI Setting", 0, "Chatter", 67, "", 0, "Turned On/Off Computer Chatter.")
+  call RegisterCommand("DEBUG", "", "", 51, -1, -1, -1, "", 0, "", 0, "", 0, "Turned On/Off Debug Mode.")
+  call RegisterCommand("BALANCE", "", "", 52, -1, -1, -1, "", 0, "", 0, "", 0, "Turned On/Off Balancing Mode.")
+  call RegisterCommand("SHOW", "STRATEGY", "", 60, -1, -1, -1, "Show", 87, "Current Strategy", 67, "", 0, "Showing current strategy.")
+  call RegisterCommand("SHOW", "STRATNAMES", "", 61, -1, -1, -1, "Show", 87, "Strategy names", 83, "", 0, "Showing all strategy names.")
+  call RegisterCommand("CHANGE", "STRATEGY", "", 70, -4, -1, -1, "Change Strategy", 72, "#", 0, "", 0, "Changes current strategy.")
+  call RegisterCommand("CANCEL", "ALL", "", 0, -1, -1, -1, "Cancel Orders", 67, "All Orders", 79, "", 0, "I have Canceled All commands you have given me so far.")
+  call RegisterCommand("CANCEL", "ATTACK", "", 2, -1, -1, -1, "Cancel Orders", 67, "Attack Orders", 65, "", 0, "I have Canceled all Attack commands you have given me so far.")
+  call RegisterCommand("CANCEL", "BUILD", "", 1, -1, -1, -1, "Cancel Orders", 67, "Build Orders", 66, "", 0, "I have Canceled all Build commands you have given me so far.")
+  call RegisterCommand("CANCEL", "QUEUE", "", 30, -1, -1, -1, "Cancel Orders", 67, "Queue", 81, "", 0, "I have Canceled all Queued commands you have given me so far.")
+  call RegisterCommand("CANCEL", "QUE", "", 30, -1, -1, -1, "", 0, "", 0, "", 0, "I have Canceled all Queued commands you have given me so far.")
+  call RegisterCommand("STOP", "", "", 10, -1, -1, -1, "Stop", 83, "", 0, "", 0, "I will Stop any current Attack.")
+  call RegisterCommand("NO", "ATTACKS", "", 11, -1, -1, -1, "Restrict", 82, "No Attacks", 65, "", 0, "I will not Attack Anything.")
+  call RegisterCommand("NO", "CREEP", "", 14, -1, -1, -1, "Restrict", 82, "No Creep Attacks", 67, "", 0, "I will not Attack Creeps.")
+  call RegisterCommand("NO", "PLAYERS", "", 15, -1, -1, -1, "Restrict", 82, "No Enemy Attacks", 69, "", 0, "I will not Attack Enemies.")
+  call RegisterCommand("BUILD", "A2A", "", 20, -4, -1, -1, "Build", 66, "Air vs. Air", 65, "#", 0, "I will build Air2Air units now.")
+  call RegisterCommand("BUILD", "A2G", "", 21, -4, -1, -1, "Build", 66, "Air vs. Ground", 73, "#", 0, "I will build Air2Ground units now.")
+  call RegisterCommand("BUILD", "G2A", "", 22, -4, -1, -1, "Build", 66, "Ground vs. Air", 82, "#", 0, "I will build Ground2Air units now.")
+  call RegisterCommand("BUILD", "G2G", "", 23, -4, -1, -1, "Build", 66, "Ground vs. Ground", 71, "#", 0, "I will build Ground2Ground units now.")
+  call RegisterCommand("BUILD", "FARMS", "", 24, -4, -1, -1, "Build", 66, "Farms", 70, "#", 0, "I will build farms now.")
+  call RegisterCommand("BUILD", "TOWERS", "", 25, -4, -1, -1, "Build", 66, "Towers", 84, "#", 0, "I will build towers now.")
+  call RegisterCommand("ATTACK", "HERE", "", 13, 0, -30, -31, "Attack", 65, "Current screen", 67, "", 0, "I will Attack/Guard the location of current screen position.")
+  call RegisterCommand("ATTACK", "SELECT", "", 16, -40, -1, -1, "Attack", 65, "Selected unit", 83, "", 0, "I will Attack/Guard the currently selected unit.")
+  call RegisterCommand("ATTACK", "TOWERRUSH", "", 17, -1, -1, -1, "Attack", 65, "Towerrush (Orc only", 84, "", 0, "")
+  call RegisterCommand("ATTACK", "", "", 12, -103, -1, -1, "Attack", 65, "Enemy", 69, "e", 0, "I will Attack/Guard the specified player.")
+  call RegisterCommand("", "START", "", 33, -1, -1, -1, "Queue", 81, "Start/Restart", 83, "", 0, "I have Started or Restarted your Queued commands.")
+  call RegisterCommand("", "RESTART", "", 33, -1, -1, -1, "", 0, "", 0, "", 0, "I have Started or Restarted your Queued commands.")
+  call RegisterCommand("", "PAUSE", "", 34, -1, -1, -1, "Queue", 81, "Pause", 80, "", 0, "I have Paused your Queued commands.")
+  call RegisterCommand("", "UNPAUSE", "", 35, -1, -1, -1, "Queue", 81, "Unpause", 78, "", 0, "I have Unpaused your Queued commands.")
+  call RegisterCommand("", "UNDO", "", 36, -1, -1, -1, "Queue", 81, "Undo", 85, "", 0, "I have Removed your last Queued command.")
+  call RegisterCommand("", "ATTACK", "HERE", 31, -1, -30, -31, "Queue", 81, "Attack Here", 65, "", 0, "I have Queued the Attack/Guard location of current screen position.")
+  call RegisterCommand("", "ATTACK", "SELECT", 32, -40, -1, -1, "Queue", 81, "Attack Select", 84, "", 0, "I have Queued the currently selected unit to Attack/Guard.")
+  call RegisterCommand("NO", "STRATCHANGE", "", 53, -1, -1, -1, "Restrict", 82, "No Strategy Change", 83, "", 0, "Turned On/Off Automatic Strategy Change.")
+  call RegisterCommand("LANGUAGE", "English", "", 71, 0, -1, -1, "AI Setting", 0, "Language", 76, "English", 69, "Set language of AI to English.")
+  call RegisterCommand("LANGUAGE", "Deutsch", "", 71, 1, -1, -1, "AI Setting", 0, "Language", 76, "Deutsch", 68, "AI Sprache ist jetzt Deutsch.")
+  call RegisterCommand("LANGUAGE", "Swedish", "", 71, 2, -1, -1, "AI Setting", 0, "Language", 76, "Swedish", 83, "AI Sprak andrat till Svenska.")
+  call RegisterCommand("LANGUAGE", "French", "", 71, 3, -1, -1, "AI Setting", 0, "Language", 76, "French", 70, "Langue de l'IA est maintenant Francais.")
+  call RegisterCommand("LANGUAGE", "Spanish", "", 71, 4, -1, -1, "AI Setting", 0, "Language", 76, "Spanish", 80, "Lengua es Espanol.")
+  call RegisterCommand("LANGUAGE", "Romanian", "", 71, 5, -1, -1, "AI Setting", 0, "Language", 76, "Romanian", 82, "Seteaza Limba in Romana.")
+  call RegisterCommand("LANGUAGE", "Russian", "", 71, 6, -1, -1, "AI Setting", 0, "Language", 76, "Russian", 85, "Language is now Russian.")
+  call RegisterCommand("LANGUAGE", "Portuguese", "", 71, 7, -1, -1, "AI Setting", 0, "Language", 76, "Portuguese", 84, "Mudar idioma para português.")
+  call RegisterCommand("LANGUAGE", "Norwegian", "", 71, 8, -1, -1, "AI Setting", 0, "Language", 76, "Norwegian", 78, "Sett språket til norsk.")
+  call RegisterCommand("LANGUAGE", "Chinese", "", 71, 9, -1, -1, "AI Setting", 0, "Language", 76, "Chinese", 67, "Language is now Chinese.")
+endfunction
+
+function AddCancelButton takes dialog d returns nothing
+  call DialogAddButton(d, dlgbutton_cancel, 512)
+endfunction
+
+function RegisterCDialogButton takes button b, integer cn, dialog d returns nothing
+  set cdlg_button[cdlg_length] = b
+  set cdlg_number[cdlg_length] = cn
+  set cdlg_dialog[cdlg_length] = d
+  set cdlg_length = cdlg_length + 1
+endfunction
+
+function RegisterDialog takes string s returns dialog
+  local dialog d = DialogCreate()
+  local trigger t = CreateTrigger()
+  if s == "" then
+    call DialogSetMessage(d, dlghdr_root)
+  else
+    call DialogSetMessage(d, s)
+  endif
+  set dlg_dialog[dlg_length] = d
+  set dlg_string[dlg_length] = s
+  set dlg_length  = dlg_length + 1
+  call TriggerRegisterDialogEvent(t, d)
+  call TriggerAddAction(t, function DialogResponse)
+  return d
+endfunction
+
+function FindDialog takes string s returns dialog
+  local integer i = 0
+  loop
+    exitwhen i >= dlg_length
+    if dlg_string[i] == s then
+      return dlg_dialog[i]
+    endif
+    set i = i + 1
+  endloop
+  return null
+endfunction
+
+function BuildStartDialog takes nothing returns nothing
+  local trigger t = CreateTrigger()
+  local integer i = 0
+  set start_dialog = DialogCreate()
+  call DialogSetMessage(start_dialog, dlghdr_choose_ally)
+  set sdbn_button[sdbn_length] = DialogAddButton(start_dialog, dlgbutton_all, 65)
+  set sdbn_number[sdbn_length] = 14
+  set sdbn_length = sdbn_length + 1
+  loop
+    exitwhen i > 11
+    if GetPlayerController(Player(i)) == MAP_CONTROL_COMPUTER and GetPlayerSlotState(Player(i)) == PLAYER_SLOT_STATE_PLAYING then
+      set sdbn_button[sdbn_length] = DialogAddButton(start_dialog, cs2s(GetPlayerName(Player(i)), GetPlayerColor(Player(i))), IMinBJ(48 + i, 57))
+      set sdbn_number[sdbn_length] = i
+      set sdbn_length = sdbn_length + 1
+    endif
+    set i = i + 1
+  endloop
+  call AddCancelButton(start_dialog)
+  call TriggerRegisterDialogEvent(t, start_dialog )
+  call TriggerAddAction(t, function StartDialogResponse)
+endfunction
+
+function BuildNumberDialog takes nothing returns nothing
+  local trigger t = CreateTrigger()
+  local integer i = 0
+  set number_dialog = DialogCreate()
+  call DialogSetMessage(number_dialog, dlghdr_choose_number)
+  loop
+    exitwhen i >= 10
+    set ndbn_button[ndbn_length] = DialogAddButton(number_dialog, I2S(i), IMinBJ(48 + i, 57))
+    set ndbn_length = ndbn_length + 1
+    set i = i + 1
+  endloop
+  call AddCancelButton(number_dialog)
+  call TriggerRegisterDialogEvent(t, number_dialog )
+  call TriggerAddAction(t, function NumberDialogResponse)
+endfunction
+
+function BuildPlayerDialog takes nothing returns nothing
+  local trigger t = CreateTrigger()
+  local integer i = 0
+  set player_dialog = DialogCreate()
+  call DialogSetMessage(player_dialog, dlghdr_choose_player)
+  loop
+    exitwhen i > 11
+    if not IsPlayerObserver(Player(i)) and GetPlayerSlotState(Player(i)) == PLAYER_SLOT_STATE_PLAYING then
+      set pcbn_button[pcbn_length] = DialogAddButton(player_dialog, cs2s(GetPlayerName(Player(i)), GetPlayerColor(Player(i))), IMinBJ(48 + i, 57))
+      set pcbn_number[pcbn_length] = i
+      set pcbn_length = pcbn_length + 1
+    endif
+    set i = i + 1
+  endloop
+  call AddCancelButton(player_dialog)
+  call TriggerRegisterDialogEvent(t, player_dialog )
+  call TriggerAddAction(t, function PlayerDialogResponse)
+endfunction
+
+function AddCommandDialog takes integer i returns nothing
+  local dialog current_dialog = null
+  local dialog next_dialog = null
+  local string current_name = ""
+
+  if command_dlg3[i] != "" then
+    if command_dlg3[i] == "#" then
+      set next_dialog = number_dialog
+    elseif command_dlg3[i] == "e" then
+      set next_dialog = player_dialog
+    else
+      set current_name = command_dlg1[i]+" "+command_dlg2[i]
+      set current_dialog = FindDialog(current_name)
+      if current_dialog != null then
+        call RegisterCDialogButton(DialogAddButton(current_dialog, command_dlg3[i], command_hotkey3[i]), i, next_dialog)
+        return
+      endif
+      set current_dialog = RegisterDialog(current_name)
+      call RegisterCDialogButton(DialogAddButton(current_dialog, command_dlg3[i], command_hotkey3[i]), i, next_dialog)
+      set next_dialog = current_dialog
+    endif
+  endif
+
+  if command_dlg2[i] != "" then
+    if command_dlg2[i] == "#" then
+      set next_dialog = number_dialog
+    elseif command_dlg2[i] == "e" then
+      set next_dialog = player_dialog
+    else
+      set current_name = command_dlg1[i]
+      set current_dialog = FindDialog(current_name)
+      if current_dialog != null then
+        call RegisterCDialogButton(DialogAddButton(current_dialog, command_dlg2[i], command_hotkey2[i]), i, next_dialog)
+        return
+      endif
+      set current_dialog = RegisterDialog(current_name)
+      call RegisterCDialogButton(DialogAddButton(current_dialog, command_dlg2[i], command_hotkey2[i]), i, next_dialog)
+      set next_dialog = current_dialog
+    endif
+  endif
+
+  if command_dlg1[i] != "" then
+    set current_name = ""
+    set current_dialog = FindDialog(current_name)
+    if current_dialog != null then
+      call RegisterCDialogButton(DialogAddButton(current_dialog, command_dlg1[i], command_hotkey1[i]), i, next_dialog)
+      return
+    endif
+    set current_dialog = RegisterDialog(current_name)
+    call RegisterCDialogButton(DialogAddButton(current_dialog, command_dlg1[i], command_hotkey1[i]), i, next_dialog)
+  endif
+endfunction
+
+function AddCDCancelButtons takes nothing returns nothing
+  local integer i = 0
+  loop
+    exitwhen i >= dlg_length
+    call AddCancelButton(dlg_dialog[i])
+    set i = i + 1
+  endloop
+endfunction
+
+function BuildCommandDialogs takes nothing returns nothing
+  local integer i = 0
+  loop
+    exitwhen i >=command_length
+    call AddCommandDialog(i)
+    set i = i + 1
+  endloop
+  set root_dialog = FindDialog("")
+endfunction
+
+function BuildTributeDialogs takes nothing returns nothing
+  local dialog d = DialogCreate()
+  local trigger t = CreateTrigger()
+  local integer i = 0
+
+  call DialogSetMessage(d, dlghdr_tribute_type)
+  set tribute_g = DialogAddButton(d, dlgbutton_gold, 71)
+  set tribute_l = DialogAddButton(d, dlgbutton_lumber, 76)
+  set tribute_give_g = DialogAddButton(d, dlgbutton_give_gold, 79)
+  set tribute_give_l = DialogAddButton(d, dlgbutton_give_lumber, 85)
+  call AddCancelButton(d)
+  call TriggerRegisterDialogEvent(t, d)
+  call TriggerAddAction(t, function TributeDialogResponse)
+  call RegisterCDialogButton(DialogAddButton(root_dialog, dlgbutton_tribute, 84), 0, d)
+  
+  set tribute_dlg = DialogCreate()
+  call DialogSetMessage(tribute_dlg, dlghdr_tribute_amount)
+  loop
+    exitwhen i >= 10
+    set tribute_dlg_button[i] = DialogAddButton(tribute_dlg, I2S(100 * (i+1)), IMinBJ(48 + i + 1, 57))
+    set i = i + 1
+  endloop
+  call AddCancelButton(tribute_dlg)
+  set tribute_dlg_length = i
+  set t = CreateTrigger()
+  call TriggerRegisterDialogEvent(t, tribute_dlg)
+  call TriggerAddAction(t, function TributeAmountDialogResponse)
+endfunction
+
+function BuildDialogs takes nothing returns nothing
+  call BuildStartDialog()
+  call BuildNumberDialog()
+  call BuildPlayerDialog()
+  call BuildCommandDialogs()
+  call BuildTributeDialogs()
+  call AddCDCancelButtons()
+endfunction
+
+function InitCommanderPart takes nothing returns nothing
+  local integer i = 0
+  local trigger commander_trigger = CreateTrigger()
+  local trigger cdlg_trigger = CreateTrigger()
+  local timer t = CreateTimer()
+
+  loop
+    exitwhen i >= 12
+    call TriggerRegisterPlayerChatEvent( commander_trigger, Player(i), command_prefix, false )
+    call TriggerRegisterPlayerEvent( cdlg_trigger, Player(i), EVENT_PLAYER_END_CINEMATIC )
+    set i = i + 1
+  endloop
+  call TriggerAddAction( commander_trigger, function Commander )
+  call TriggerAddAction( cdlg_trigger, function DialogCommander )
+
+  call RegisterCommands()
+  call BuildDialogs()
+
+  //Timer that calls MapInit
+  call TimerStart(t,3.0, false, function MapInit)
+endfunction
+
+function SendToAllAIs takes integer cmd, integer data returns nothing
+  local integer i = 0
+  loop
+    exitwhen i > 11
+    if GetPlayerController(Player(i)) == MAP_CONTROL_COMPUTER then
+      call CommandAI(Player(i), cmd, data)
+    endif
+    set i = i + 1
+  endloop
+endfunction
+
+function GetNextHuman takes integer last returns integer
+  local integer i = last + 1
+  loop
+    exitwhen i  > 11
+    if GetPlayerController(Player(i)) == MAP_CONTROL_USER and not IsPlayerObserver(Player(i)) and GetPlayerSlotState(Player(i)) == PLAYER_SLOT_STATE_PLAYING then
+      return i
+    endif
+    set i = i + 1
+  endloop
+  return -1
+endfunction
+
+function GetFirstHuman takes nothing returns integer
+  return GetNextHuman(-1)
+endfunction
+
+function CheckAllyToControl takes player p returns boolean
+  local integer q = 0
+  loop
+    exitwhen q > 11
+    if IsPlayerAlly(Player(q), p) and GetPlayerController(Player(q)) == MAP_CONTROL_COMPUTER then
+      return true
+    endif
+    set q = q + 1
+  endloop
+  return false
+endfunction
+
+function EnumKillUnit takes nothing returns nothing
+  call KillUnit(GetEnumUnit())
+endfunction
+
+function RemoveHumanUnitsAndRes takes nothing returns nothing
+  local player p = GetEnumPlayer()
+  local group g = null
+  if GetPlayerController(p) != MAP_CONTROL_USER then
+    return
+  endif
+  set g = CreateGroup()
+  call GroupEnumUnitsOfPlayer(g, p, null)
+  call ForGroup(g, function EnumKillUnit)
+  call SetPlayerState(p, PLAYER_STATE_RESOURCE_GOLD, 0)
+  call SetPlayerState(p, PLAYER_STATE_RESOURCE_LUMBER, 0)
+endfunction
+
+function GameStartDlgResponse takes nothing returns nothing
+  local button cb = GetClickedButton()
+  if cb != ai_only_mode then
+    call InitCommanderPart()
+    if cb == no_human_mode then
+      call ForForce(GetPlayersAll(), function RemoveHumanUnitsAndRes)
+      call SendToAllAIs(53,0)
+    endif
+  endif
+  call DialogDestroy(game_start_dialog)
+  call DestroyTrigger(game_start_trigger)
+endfunction
+
+function GameStartDefault takes nothing returns nothing
+  if game_mode != "ai_only" then
+    call InitCommanderPart()
+    if game_mode == "no_human" then
+      call ForForce(GetPlayersAll(), function RemoveHumanUnitsAndRes)
+      call SendToAllAIs(53,0)
+    endif
+  endif
+endfunction
+
+function GameStartDlg takes nothing returns nothing
+  local integer host = GetFirstHuman()
+  local integer p = host
+  loop
+    if p == -1 then
+      return
+    endif
+    exitwhen CheckAllyToControl(Player(p))
+    set p = GetNextHuman(p)
+  endloop
+  if game_mode != "" then
+    call GameStartDefault()
+    return
+  endif
+  set game_start_dialog = DialogCreate()
+  call DialogSetMessage(game_start_dialog, dlghdr_game_type)
+  set commander_mode = DialogAddButton(game_start_dialog, dlgbutton_commander, 67)
+  set no_human_mode = DialogAddButton(game_start_dialog, dlgbutton_no_human, 79)
+  set ai_only_mode = DialogAddButton(game_start_dialog, dlgbutton_ai_only, 78)
+
+  set game_start_trigger = CreateTrigger()
+  call TriggerRegisterDialogEvent(game_start_trigger, game_start_dialog)
+  call TriggerAddAction(game_start_trigger, function GameStartDlgResponse)
+
+  call DialogDisplay(Player(host), game_start_dialog, true)
+endfunction
+
+function initLanguageEnglish takes nothing returns nothing
+  set chat_no_ally = "I will never obey you."
+  set dlghdr_choose_ally = "Choose Ally"
+  set dlghdr_choose_number = "Choose Number"
+  set dlghdr_choose_player = "Choose Player"
+  set dlghdr_game_type = "Choose Game Type"
+  set dlghdr_root = "Choose Command"
+  set dlghdr_tribute_type = "Choose Tribute Type"
+  set dlghdr_tribute_amount = "Choose Tribute Amount"
+  set dlgbutton_cancel = "Cancel"
+  set dlgbutton_all = "All"
+  set dlgbutton_gold = "Gold"
+  set dlgbutton_lumber = "Lumber"
+  set dlgbutton_give_gold = "Give Gold"
+  set dlgbutton_give_lumber = "Give Lumber"
+  set dlgbutton_tribute = "Tribute"
+  set dlgbutton_commander = "Commander"
+  set dlgbutton_no_human = "Computers only"
+  set dlgbutton_ai_only = "No Commander"
+endfunction
+function initLanguageDeutsch takes nothing returns nothing
+  set chat_no_ally = "Ich werde dir nie gehorchen."
+  set dlghdr_choose_ally = "Wähle einen Verbündeten"
+  set dlghdr_choose_number = "Zahl wählen"
+  set dlghdr_choose_player = "Wähle einen Spieler"
+  set dlghdr_game_type = "Wähle den Spielmodus"
+  set dlghdr_root = "Befehl wählen"
+  set dlghdr_tribute_type = "Wähle die Tributart"
+  set dlghdr_tribute_amount = "Wähle die Tributmenge"
+  set dlgbutton_cancel = "Abbrechen"
+  set dlgbutton_all = "Alle"
+  set dlgbutton_gold = "Gold"
+  set dlgbutton_lumber = "Holz"
+  set dlgbutton_give_gold = "Gold geben"
+  set dlgbutton_give_lumber = "Holz geben"
+  set dlgbutton_tribute = "Tribut"
+  set dlgbutton_commander = "Commander"
+  set dlgbutton_no_human = "Nur Computer"
+  set dlgbutton_ai_only = "Kein Commander"
+  call StoreString(translation, language, "AI Setting", "AI Einstellungen")
+  call StoreString(translation, language, "Chatter", "Chatten")
+  call StoreString(translation, language, "Turned On/Off Computer Chatter.", "Computer Chatten wurde an/ausgeschaltet.")
+  call StoreString(translation, language, "Turned On/Off Debug Mode.", "Debug Modus wurde an/ausgeschaltet.")
+  call StoreString(translation, language, "Turned On/Off Balancing Mode.", "Balance Modus wurde an/ausgeschaltet.")
+  call StoreString(translation, language, "Show", "Zeige")
+  call StoreString(translation, language, "Current Strategy", "Momentane Strategie")
+  call StoreString(translation, language, "Showing current strategy.", "Ich zeige momentane Strategie an.")
+  call StoreString(translation, language, "Strategy names", "Strategienamen")
+  call StoreString(translation, language, "Change Strategy", "Ändere Strategie")
+  call StoreString(translation, language, "Changes current strategy.", "Ich ändere die momentane Strategie.")
+  call StoreString(translation, language, "Cancel Orders", "Befehle löschen")
+  call StoreString(translation, language, "All Orders", "Alle Befehle")
+  call StoreString(translation, language, "I have Canceled All commands you have given me so far.", "Ich habe alle Befehle gelöscht, die du mir bis jetzt gegeben hast.")
+  call StoreString(translation, language, "Attack Orders", "Angriffsbefehle")
+  call StoreString(translation, language, "I have Canceled all Attack commands you have given me so far.", "Ich habe alle Angriffsbefehle gelöscht, die du mir bis jetzt gegeben hast.")
+  call StoreString(translation, language, "Build Orders", "Baubefehle")
+  call StoreString(translation, language, "I have Canceled all Build commands you have given me so far.", "Ich habe alle Baubefehle gelöscht, die du mir bis jetzt gegeben hast.")
+  call StoreString(translation, language, "Queue", "Queuebefehle")
+  call StoreString(translation, language, "I have Canceled all Queued commands you have given me so far.", "Ich habe alle Queuebefehle gelöscht, die du mir bis jetzt gegeben hast.")
+  call StoreString(translation, language, "I will Stop any current Attack.", "Ich breche den momentanen Angriff ab.")
+  call StoreString(translation, language, "I will not Attack Anything.", "Ich greife nichts an.")
+  call StoreString(translation, language, "I will not Attack Creeps.", "Ich greife keine Creeps an.")
+  call StoreString(translation, language, "I will not Attack Enemies.", "Ich greife keine Feinde an.")
+  call StoreString(translation, language, "I will build Air2Air units now.", "Ich baue Luft-Luft-Einheiten.")
+  call StoreString(translation, language, "I will build Air2Ground units now.", "Ich baue Luft-Boden-Einheiten.")
+  call StoreString(translation, language, "I will build Ground2Air units now.", "Ich baue Boden-Luft-Einheiten.")
+  call StoreString(translation, language, "I will build Ground2Ground units now.", "Ich baue Boden-Boden-Einheiten.")
+  call StoreString(translation, language, "I will build farms now.", "Ich baue Farmen.")
+  call StoreString(translation, language, "I will build towers now.", "Ich baue Türme.")
+  call StoreString(translation, language, "I will Attack/Guard the location of current screen position.", "Ich greife an/verteidige die momentane Bildschirmposition.")
+  call StoreString(translation, language, "I will Attack/Guard the currently selected unit.", "Ich greife an/verteidige die gewählte Einheit.")
+  call StoreString(translation, language, "I will Attack/Guard the specified player.", "Ich greife an/verteidige den gewählten Spieler.")
+  call StoreString(translation, language, "I have Started or Restarted your Queued commands.", "Ich habe die Befehlsqueue gestartet / erneut gestartet.")
+  call StoreString(translation, language, "I have Paused your Queued commands.", "Ich habe die Befehlsqueue angehalten.")
+  call StoreString(translation, language, "I have Unpaused your Queued commands.", "Ich habe die Befehlsqueue weiterlaufen lassen.")
+  call StoreString(translation, language, "I have Removed your last Queued command.", "Ich habe den letzten Befehl in der Befehlsqueue gelöscht.")
+  call StoreString(translation, language, "I have Queued the Attack/Guard location of current screen position.", "Ich habe den Angriff/die Verteidigung der momentanen Bildschirmposition in die Queue hinzugefügt.")
+  call StoreString(translation, language, "I have Queued the currently selected unit to Attack/Guard.", "Ich habe den Angriff/die Verteidigung der gewählten Einheit in die Queue hinzugefügt.")
+  call StoreString(translation, language, "Turned On/Off Automatic Strategy Change.", "Ich habe den automatischen Strategiewechsel an/ausgeschaltet.")
+  call StoreString(translation, language, "Restrict", "Einschränken")
+  call StoreString(translation, language, "No Attacks", "Kein Angriff")
+  call StoreString(translation, language, "No Creep Attacks", "Keine Creepangriffe")
+  call StoreString(translation, language, "No Enemy Attacks", "Keine Feindangriffe")
+  call StoreString(translation, language, "Farms", "Farmen")
+  call StoreString(translation, language, "Towers", "Türme")
+  call StoreString(translation, language, "Current screen", "Bildschirmposition")
+  call StoreString(translation, language, "Selected unit", "Gewählte Einheit")
+  call StoreString(translation, language, "Towerrush (Orc only)", "Towerrush (Nur Orks)")
+  call StoreString(translation, language, "Start/Restart", "Start / Neustart")
+  call StoreString(translation, language, "No Strategy Change", "Kein Strategiewechsel")
+  call StoreString(translation, language, "Build", "Bauen")
+  call StoreString(translation, language, "Attack Here", "Bildschirmposition angreifen")
+  call StoreString(translation, language, "Unpause", "Ende Pause")
+  call StoreString(translation, language, "Undo", "Rückgängig")
+  call StoreString(translation, language, "Attack select", "Gewählte Einheit angreifen")
+  call StoreString(translation, language, "Air vs. Air", "Luft-Luft")
+  call StoreString(translation, language, "Air vs. Ground", "Luft-Boden")
+  call StoreString(translation, language, "Ground vs. Air", "Boden-Luft")
+  call StoreString(translation, language, "Ground vs. Ground", "Boden-Boden")
+endfunction
+function initLanguageSwedish takes nothing returns nothing
+  set chat_no_ally = "jag kommer aldrig lyda dig."
+  set dlghdr_choose_ally = "Välj din lierade"
+  set dlghdr_choose_number = "Välj nummer"
+  set dlghdr_choose_player = "Välj spelare"
+  set dlghdr_game_type = "Välj speltyp"
+  set dlghdr_root = "Välj kommando"
+  set dlghdr_tribute_type = "Välj bidragsmetod"
+  set dlghdr_tribute_amount = "Välj bidragsstorlek"
+  set dlgbutton_cancel = "Avbryt"
+  set dlgbutton_all = "Alla"
+  set dlgbutton_gold = "Guld"
+  set dlgbutton_lumber = "Trä"
+  set dlgbutton_tribute = "Bidrag"
+  set dlgbutton_commander = "Commander"
+  set dlgbutton_no_human = "Endast datorer"
+  set dlgbutton_ai_only = "Ingen Commander"
+  call StoreString(translation, language, "AI Setting", "AI Inställningar")
+  call StoreString(translation, language, "Chatter", "Chat")
+  call StoreString(translation, language, "Turned On/Off Computer Chatter.", "Stängde av / satte på dator chat.")
+  call StoreString(translation, language, "Turned On/Off Debug Mode.", "Stängde av / satte på felsökningsmedelande.")
+  call StoreString(translation, language, "Turned On/Off Balancing Mode.", "Stängde av / satte på balanseringsläge.")
+  call StoreString(translation, language, "Show", "Visa")
+  call StoreString(translation, language, "Current Strategy", "Aktuell strategi")
+  call StoreString(translation, language, "Showing current strategy.", "Visar aktuell strategi.")
+  call StoreString(translation, language, "Strategy names", "Strateginamn")
+  call StoreString(translation, language, "Change Strategy", "Byt strategi")
+  call StoreString(translation, language, "Changes current strategy.", "Byter aktuell strategi.")
+  call StoreString(translation, language, "Cancel Orders", "Avbryt order")
+  call StoreString(translation, language, "All Orders", "Alla ordrar")
+  call StoreString(translation, language, "I have Canceled All commands you have given me so far.", "Jag har avbrutit alla kommandon.")
+  call StoreString(translation, language, "Attack Orders", "Anfallskommand")
+  call StoreString(translation, language, "I have Canceled all Attack commands you have given me so far.", "Jag har avbrutit alla anfallskommandon.")
+  call StoreString(translation, language, "Build Orders", "Byggkommand")
+  call StoreString(translation, language, "I have Canceled all Build commands you have given me so far.", "Jag har avbrutit alla byggkommandon.")
+  call StoreString(translation, language, "Queue", "Följdkommando")
+  call StoreString(translation, language, "I have Canceled all Queued commands you have given me so far.", "Jag har avbrutit alla följdkommandon.")
+  call StoreString(translation, language, "I will Stop any current Attack.", "Jag har avbrutit alla byggorder du gett hittills.")
+  call StoreString(translation, language, "I will not Attack Anything.", "Jag har avbrutit alla följdkommando du gett mig hittills.")
+  call StoreString(translation, language, "I will not Attack Creeps.", "Jag avbryter nuvarande anfall.")
+  call StoreString(translation, language, "I will not Attack Enemies.", "Jag kommer inte anfalla något.")
+  call StoreString(translation, language, "I will build Air2Air units now.", "Jag kommer bygga luft- mot luftenheter nu.")
+  call StoreString(translation, language, "I will build Air2Ground units now.", "Jag kommer bygga luft- mot markenheter nu.")
+  call StoreString(translation, language, "I will build Ground2Air units now.", "Jag kommer bygga mark- mot luftenheter nu.")
+  call StoreString(translation, language, "I will build Ground2Ground units now.", "Jag kommer bygga mark- mot markenheter nu.")
+  call StoreString(translation, language, "I will build farms now.", "Jag kommer bygga farms nu.")
+  call StoreString(translation, language, "I will build towers now.", "Jag kommer bygga torn nu.")
+  call StoreString(translation, language, "I will Attack/Guard the location of current screen position.", "Jag kommer anfalla/vakta nuvarande position av bilden.")
+  call StoreString(translation, language, "I will Attack/Guard the currently selected unit.", "Jag kommer anfalla/vakta den aktuellt valda enheten.")
+  call StoreString(translation, language, "I will Attack/Guard the specified player.", "Jag kommer anfalla/vakta den valda spelaren.")
+  call StoreString(translation, language, "I have Started or Restarted your Queued commands.", "Jag har startat eller återställt dina följdkommando.")
+  call StoreString(translation, language, "I have Paused your Queued commands.", "Jag har pausat dina följdkommando.")
+  call StoreString(translation, language, "I have Unpaused your Queued commands.", "Jag har fortsatt med dina följdkommandon.")
+  call StoreString(translation, language, "I have Removed your last Queued command.", "Jag har tagit bort ditt senaste följdkommando.")
+  call StoreString(translation, language, "I have Queued the Attack/Guard location of current screen position.", "Jag har följdlagt en order att anfalla/vakta nuvarande bild.")
+  call StoreString(translation, language, "I have Queued the currently selected unit to Attack/Guard.", "Jag har följdlagt en order att anfalla/vakta valda enheten.")
+  call StoreString(translation, language, "Turned On/Off Automatic Strategy Change.", "Stängt av / satt på automatiskt strategibyte.")
+  call StoreString(translation, language, "Restrict", "Begränsa")
+  call StoreString(translation, language, "No Attacks", "Inga anfall")
+  call StoreString(translation, language, "No Creep Attacks", "Inga creep-attacker")
+  call StoreString(translation, language, "No Enemy Attacks", "Inga fiende-anfall")
+  call StoreString(translation, language, "Farms", "Farms")
+  call StoreString(translation, language, "Towers", "Torn")
+  call StoreString(translation, language, "Current screen", "Nuvarande bild")
+  call StoreString(translation, language, "Selected unit", "Vald enhet")
+  call StoreString(translation, language, "Towerrush (Orc only)", "Towerrush (Bara för Orc)")
+  call StoreString(translation, language, "Start/Restart", "Starta/Starta om")
+  call StoreString(translation, language, "No Strategy Change", "Inget strategibyte")
+  call StoreString(translation, language, "Build", "Bygg")
+  call StoreString(translation, language, "Attack Here", "Anfall bild")
+  call StoreString(translation, language, "Unpause", "Fortsätt")
+  call StoreString(translation, language, "Undo", "Ångra")
+  call StoreString(translation, language, "attack select", "Anfall vald")
+  call StoreString(translation, language, "Air vs. Air", "Luft mot. Luft")
+  call StoreString(translation, language, "Air vs. Ground", "Luft mot. Mark")
+  call StoreString(translation, language, "Ground vs. Air", "Mark mot. Luft")
+  call StoreString(translation, language, "Ground vs. Ground", "Mark mot. Mark")
+endfunction
+function initLanguageFrench takes nothing returns nothing
+  set chat_no_ally = "Je ne t'obéirai jamais."
+  set dlghdr_choose_ally = "Choisir un allie."
+  set dlghdr_choose_number = "Choisir un nombre."
+  set dlghdr_choose_player = "Choisir un joueur."
+  set dlghdr_game_type = "Choisir un type de partie."
+  set dlghdr_root = "Choisissez la Commande."
+  set dlghdr_tribute_type = "Choisir le type de tributs."
+  set dlghdr_tribute_amount = "Choisirla quantite de tributs."
+  set dlgbutton_cancel = "Annuler."
+  set dlgbutton_all = "Tout."
+  set dlgbutton_gold = "Or."
+  set dlgbutton_lumber = "Bois."
+  set dlgbutton_tribute = "Tributs."
+  set dlgbutton_commander = "Commandant."
+  set dlgbutton_no_human = "Seulement des ordinateurs"
+  set dlgbutton_ai_only = "Pas de commandant."
+  call StoreString(translation, language, "AI Setting", "Configuration de l'IA")
+  call StoreString(translation, language, "Chatter", "Discussion")
+  call StoreString(translation, language, "Turned On/Off Computer Chatter.", "Permettre/Proscrire la discussion avec l'ordinateur.")
+  call StoreString(translation, language, "Turned On/Off Debug Mode.", "Permettre/Proscrire le mode debogger .")
+  call StoreString(translation, language, "Turned On/Off Balancing Mode.", "Permettre/proscire le mode d'équilibrage.")
+  call StoreString(translation, language, "Show", "Montrer")
+  call StoreString(translation, language, "Current Strategy", "Strategie actuelle")
+  call StoreString(translation, language, "Showing current strategy.", "Montrer la strategie actuelle.")
+  call StoreString(translation, language, "Strategy names", "Noms des strategies")
+  call StoreString(translation, language, "Change Strategy", "Changer la strategie")
+  call StoreString(translation, language, "Changes current strategy.", "Changer la strategie actuelle.")
+  call StoreString(translation, language, "Cancel Orders", "Annuler les ordres")
+  call StoreString(translation, language, "All Orders", "tous les ordres")
+  call StoreString(translation, language, "I have Canceled All commands you have given me so far.", "J'ai annule tous les ordres que tu m'as donne auparavant.")
+  call StoreString(translation, language, "Attack Orders", "Les ordres d'attaques")
+  call StoreString(translation, language, "I have Canceled all Attack commands you have given me so far.", "J'ai annule tous les ordres d'attaque que tu m'as donne auparavant.")
+  call StoreString(translation, language, "Build Orders", "les ordres de construction")
+  call StoreString(translation, language, "I have Canceled all Build commands you have given me so far.", "J'ai annule tous les ordres de construction que tu m'as donne auparavant.")
+  call StoreString(translation, language, "Queue", "file d'attente")
+  call StoreString(translation, language, "I have Canceled all Queued commands you have given me so far.", "J'ai annule tous les ordres dans la file d'attente que tu m'as donne auparavant.")
+  call StoreString(translation, language, "I will Stop any current Attack.", "Je vais annuler toutes attaques actuelles.")
+  call StoreString(translation, language, "I will not Attack Anything.", "Je vais attaqer personne.")
+  call StoreString(translation, language, "I will not Attack Creeps.", "Je ne vais pas attquer de creep.")
+  call StoreString(translation, language, "I will not Attack Enemies.", "Je ne vais pas attaquer d'ennemis.")
+  call StoreString(translation, language, "I will build Air2Air units now.", "Je vais creer des unites air/air maintenant.")
+  call StoreString(translation, language, "I will build Air2Ground units now.", "Je vais creer des unites air/sol maintenant.")
+  call StoreString(translation, language, "I will build Ground2Air units now.", "Je vais creer des unites sol/air maintenant.")
+  call StoreString(translation, language, "I will build Ground2Ground units now.", "Je vais creer des unites sol/sol maintenant.")
+  call StoreString(translation, language, "I will build farms now.", "Je vais creer des fermes maintenant.")
+  call StoreString(translation, language, "I will build towers now.", "Je vais creer des tourelles maintenant.")
+  call StoreString(translation, language, "I will Attack/Guard the location of current screen position.", "Je vais attaquer/garder a la position actuelle de l'ecran.")
+  call StoreString(translation, language, "I will Attack/Guard the currently selected unit.", "Je vais attaquer/garder cette unite selectionnee actuellement.")
+  call StoreString(translation, language, "I will Attack/Guard the specified player.", "Je vais attaquer/garder ce joueur specifique.")
+  call StoreString(translation, language, "I have Started or Restarted your Queued commands.", "J'ai commence ou recommence tes ordres dans la file d'attente.")
+  call StoreString(translation, language, "I have Paused your Queued commands.", "J'ai mis en veille vos ordres dans la file d'attente.")
+  call StoreString(translation, language, "I have Unpaused your Queued commands.", "J'ai repris vos ordres dans la file d'attente.")
+  call StoreString(translation, language, "I have Removed your last Queued command.", "J'ai supprime vos derniers ordres dans la file d'attente.")
+  call StoreString(translation, language, "I have Queued the Attack/Guard location of current screen position.", "J'ai mis dans la file d'attente l'attaque/la protection du lieu de l'ecran actuel.")
+  call StoreString(translation, language, "I have Queued the currently selected unit to Attack/Guard.", "J'ai mis dans la file d'attente l'unite choisir a attaquer/garder.")
+  call StoreString(translation, language, "Turned On/Off Automatic Strategy Change.", "Permettre/Proscire les changements automatiques de strategie.")
+  call StoreString(translation, language, "Restrict", "Restrictions")
+  call StoreString(translation, language, "No Attacks", "Pas d'attaques")
+  call StoreString(translation, language, "No Creep Attacks", "Pas d'attaques de creep")
+  call StoreString(translation, language, "No Enemy Attacks", "Pas d'attaques contre des ennemis")
+  call StoreString(translation, language, "Farms", "Fermes")
+  call StoreString(translation, language, "Towers", "Tourelles")
+  call StoreString(translation, language, "Current screen", "Position actuelle")
+  call StoreString(translation, language, "Selected unit", "L'unite selectionnee")
+  call StoreString(translation, language, "Towerrush (Orc only)", "Towerrush (Orc seulement)")
+  call StoreString(translation, language, "No Strategy Change", "Pas de changement de strategie")
+  call StoreString(translation, language, "Start/Restart", "Commencer/Recommencer")
+  call StoreString(translation, language, "Build", "Construire")
+  call StoreString(translation, language, "Attack Here", "Attaquer ici")
+  call StoreString(translation, language, "Unpause", "Reprise")
+  call StoreString(translation, language, "Undo", "Annuler")
+  call StoreString(translation, language, "attack select", "Attaque choisie")
+  call StoreString(translation, language, "Air vs. Air", "Air vs. Air")
+  call StoreString(translation, language, "Air vs. Ground", "Air vs. sol")
+  call StoreString(translation, language, "Ground vs. Air", "sol vs. Air")
+  call StoreString(translation, language, "Ground vs. Ground", "sol vs. sol")
+endfunction
+function initLanguageSpanish takes nothing returns nothing
+  set chat_no_ally = "Nunca te voy a obedecer."
+  set dlghdr_choose_ally = "Escoger aliado"
+  set dlghdr_choose_number = "Escoger numero"
+  set dlghdr_choose_player = "Escoger jugador"
+  set dlghdr_game_type = "Escoger tipo de juego"
+  set dlghdr_root = "Escoger comando"
+  set dlghdr_tribute_type = "Escoger tipo de tributo"
+  set dlghdr_tribute_amount = "Escoger cantidad de tributo"
+  set dlgbutton_cancel = "Cancelar"
+  set dlgbutton_all = "Todo"
+  set dlgbutton_gold = "Oro"
+  set dlgbutton_lumber = "Leña"
+  set dlgbutton_tribute = "Tributo"
+  set dlgbutton_commander = "Comandante"
+  set dlgbutton_no_human = "Solo computadoras"
+  set dlgbutton_ai_only = "No usar comandante"
+  call StoreString(translation, language, "AI Setting", "Opcion del AI")
+  call StoreString(translation, language, "Chatter", "Conversacion")
+  call StoreString(translation, language, "Turned On/Off Computer Chatter.", "Se Activo/Desactivo la conversacion de la computadora.")
+  call StoreString(translation, language, "Turned On/Off Debug Mode.", "Se Activo/Desactivo el mode de Depuracion.")
+  call StoreString(translation, language, "Turned On/Off Balancing Mode.", "Se Activo/Desactivo el modo de balance.")
+  call StoreString(translation, language, "Show", "Mostrar")
+  call StoreString(translation, language, "Current Strategy", "Estrategia actual")
+  call StoreString(translation, language, "Showing current strategy.", "Mostrando estrategia actual.")
+  call StoreString(translation, language, "Strategy names", "Nombres de estrategias")
+  call StoreString(translation, language, "Change Strategy", "Cambiar Estrategia")
+  call StoreString(translation, language, "Changes current strategy.Cambiando the estrategia.", "")
+  call StoreString(translation, language, "Cancel Orders", "Cancelar Ordernes")
+  call StoreString(translation, language, "All Orders", "Todas las ordenes")
+  call StoreString(translation, language, "I have Canceled All commands you have given me so far.", "He cancelado todos los comandos que me diste hasta ahora.")
+  call StoreString(translation, language, "Attack Orders", "Ordenes de Ataque")
+  call StoreString(translation, language, "I have Canceled all Attack commands you have given me so far.", "He cancelado todos los comandos de ataque que me diste hasta ahora.")
+  call StoreString(translation, language, "Build Orders", " Ordenes de Construccion")
+  call StoreString(translation, language, "I have Canceled all Build commands you have given me so far.", "He cancelado todos los comandos de construccion que me diste hasta ahora.")
+  call StoreString(translation, language, "Queue", "Comandos en la Cola")
+  call StoreString(translation, language, "I have Canceled all Queued commands you have given me so far.", "He cancelado todos los comandos en la cola que me diste hasta ahora.")
+  call StoreString(translation, language, "I will Stop any current Attack.", "Voy a detener todos los ataques.")
+  call StoreString(translation, language, "I will not Attack Anything.", "No voy a atacar nada.")
+  call StoreString(translation, language, "I will not Attack Creeps.", "No voy a atacar a los creeps.")
+  call StoreString(translation, language, "I will not Attack Enemies.", "No voy a atacar a los enemigos")
+  call StoreString(translation, language, "I will build Air2Air units now.", "Ahora voy a construir unidades Aire-Aire.")
+  call StoreString(translation, language, "I will build Air2Ground units now.", "Ahora voy a construir unidades Aire-Tierra.")
+  call StoreString(translation, language, "I will build Ground2Air units now.", "Ahora voy a construir unidades Tierra-Aire.")
+  call StoreString(translation, language, "I will build Ground2Ground units now.", "Ahora voy a construir unidades Tierra-Tierra.")
+  call StoreString(translation, language, "I will build farms now.", "Ahora voy a construir granjas.")
+  call StoreString(translation, language, "I will build towers now.", "Ahora voy a construir torres.")
+  call StoreString(translation, language, "I will Attack/Guard the location of current screen position.", "Voy a atacar/proteger el sector que actualmente esta en pantalla.")
+  call StoreString(translation, language, "I will Attack/Guard the currently selected unit.", "Voy a atacar/proteger la unidad que esta seleccionada")
+  call StoreString(translation, language, "I will Attack/Guard the specified player.", "Voy a atacar/proteger el jugador especificado.")
+  call StoreString(translation, language, "I have Started or Restarted your Queued commands.", "He  comenzado o vuelto a comenzar tus comandos en cola.")
+  call StoreString(translation, language, "I have Paused your Queued commands.", "He dejado en pausa tus comandos en cola.")
+  call StoreString(translation, language, "I have Unpaused your Queued commands.", "Procedo a continuar tus comandos en cola.")
+  call StoreString(translation, language, "I have Removed your last Queued command.", "He removido tu ultimo comando en cola")
+  call StoreString(translation, language, "I have Queued the Attack/Guard location of current screen position.", "He dejado en Ia cola la orden para atacar/proteger la posición actual de la pantalla.")
+  call StoreString(translation, language, "I have Queued the currently selected unit to Attack/Guard.", "He dejado en Ia cola la orden para atacar/proteger la unidad seleccionada.")
+  call StoreString(translation, language, "Turned On/Off Automatic Strategy Change.", "Se activo/desactivo el cambio automatico de estrategia.")
+  call StoreString(translation, language, "Restrict", "Restringir")
+  call StoreString(translation, language, "No Attacks", "No Atacar")
+  call StoreString(translation, language, "No Creep Attacks", "No atacar a los Creeps")
+  call StoreString(translation, language, "No Enemy Attacks", "No atacar a los enemigos")
+  call StoreString(translation, language, "Farms", "Granjas")
+  call StoreString(translation, language, "Towers", "Torres")
+  call StoreString(translation, language, "Current screen", "Sector en Pantalla")
+  call StoreString(translation, language, "Selected unit", "Unidad Seleccionada")
+  call StoreString(translation, language, "Towerrush (Orc only)", "Usar Torres (Solo Orcos)")
+  call StoreString(translation, language, "Start/Restart", "Comenzar/Re-empezar")
+  call StoreString(translation, language, "No Strategy Change", "No cambiar de estrategia")
+  call StoreString(translation, language, "Build", "Construir")
+  call StoreString(translation, language, "Attack Here", "Atacar aqui")
+  call StoreString(translation, language, "Unpause", "Continuar")
+  call StoreString(translation, language, "Undo", "Deshacer")
+  call StoreString(translation, language, "attack select", "Atacar Seleccion")
+  call StoreString(translation, language, "Air vs. Air", "Aire contra Aire")
+  call StoreString(translation, language, "Air vs. Ground", "Aire contra Tierra")
+  call StoreString(translation, language, "Ground vs. Air", "Tierra contra Aire")
+  call StoreString(translation, language, "Ground vs. Ground", "Tierra contra Tierra")
+endfunction
+function initLanguageRomanian takes nothing returns nothing
+  set chat_no_ally = "Nu voi asculta niciodata de tine."
+  set dlghdr_choose_ally = "Alege aliatul"
+  set dlghdr_choose_number = "Alege un numar"
+  set dlghdr_choose_player = "Alege jucatorul"
+  set dlghdr_game_type = "Alege tipul meciului"
+  set dlghdr_root = "Alege comanda"
+  set dlghdr_tribute_type = "Alege tipul de tribut"
+  set dlghdr_tribute_amount = "Alege cantitatea tributului"
+  set dlgbutton_cancel = "Anuleaza"
+  set dlgbutton_all = "Toate"
+  set dlgbutton_gold = "Aur"
+  set dlgbutton_lumber = "Lemn"
+  set dlgbutton_tribute = "Tribut"
+  set dlgbutton_commander = "Commander"
+  set dlgbutton_no_human = "Numai computere"
+  set dlgbutton_ai_only = "Fara Commander"
+  call StoreString(translation, language, "AI Setting", "Setari AI")
+  call StoreString(translation, language, "Chatter", "Vorbire")
+  call StoreString(translation, language, "Turned On/Off Computer Chatter.", "Schimba On/Off vorbirea computerului.")
+  call StoreString(translation, language, "Turned On/Off Debug Mode.", "Schimba On/Off Debug Mode.")
+  call StoreString(translation, language, "Turned On/Off Balancing Mode.", "Schimba On/Off Mod de echilibrare.")
+  call StoreString(translation, language, "Show", "Arata")
+  call StoreString(translation, language, "Current Strategy", "Strategia Curenta")
+  call StoreString(translation, language, "Showing current strategy.", "Arata strategia curenta.")
+  call StoreString(translation, language, "Strategy names", "Nume de strategii")
+  call StoreString(translation, language, "Change Strategy", "Schimba Strategia")
+  call StoreString(translation, language, "Changes current strategy.", "Schimba strategia curenta.")
+  call StoreString(translation, language, "Cancel Orders", "Anuleaza Comenzile")
+  call StoreString(translation, language, "All Orders", "Toate Comenzile")
+  call StoreString(translation, language, "I have Canceled All commands you have given me so far.", "Am anulat toate comenzile date pina acum.")
+  call StoreString(translation, language, "Attack Orders", "Comenzile de Atac")
+  call StoreString(translation, language, "I have Canceled all Attack commands you have given me so far.", "Am anulat toate comenzile de atac date pina acum.")
+  call StoreString(translation, language, "Build Orders", "Comenzile de constructii")
+  call StoreString(translation, language, "I have Canceled all Build commands you have given me so far.", "Am anulat toate comenzile de construit date pina acum.")
+  call StoreString(translation, language, "Queue", "Sirul")
+  call StoreString(translation, language, "I have Canceled all Queued commands you have given me so far.", "Am anulat tot sirul de comenzi date pina acum.")
+  call StoreString(translation, language, "I will Stop any current Attack.", "Anulez orice atac pe care il fac.")
+  call StoreString(translation, language, "I will not Attack Anything.", "Nu voi ataca nimic.")
+  call StoreString(translation, language, "I will not Attack Creeps.", "Nu voi ataca neutrii.")
+  call StoreString(translation, language, "I will not Attack Enemies.", "Nu voi ataca pe inamici.")
+  call StoreString(translation, language, "I will build Air2Air units now.", "Voi face unitati Aer-Aer acum.")
+  call StoreString(translation, language, "I will build Air2Ground units now.", "Voi face unitati Aer-Sol acum.")
+  call StoreString(translation, language, "I will build Ground2Air units now.", "Voi face unitati Sol-Aer acum.")
+  call StoreString(translation, language, "I will build Ground2Ground units now.", "Voi face unitati Sol-Sol acum.")
+  call StoreString(translation, language, "I will build farms now.", "Voi face ferme acum.")
+  call StoreString(translation, language, "I will build towers now.", "Voi construii turnuri acum")
+  call StoreString(translation, language, "I will Attack/Guard the location of current screen position.", "Voi Ataca/Apara locul determinat de pozitia ecranului.")
+  call StoreString(translation, language, "I will Attack/Guard the currently selected unit.", "Voi Ataca/Apara unitatea selectata de tine.")
+  call StoreString(translation, language, "I will Attack/Guard the specified player.", "Voi Ataca/Apara jucatorul specificat.")
+  call StoreString(translation, language, "I have Started or Restarted your Queued commands.", "Am Inceput sau am Reinceput sirul tau de comenzi.")
+  call StoreString(translation, language, "I have Paused your Queued commands.", "Am pus pauza sirului de comenzi.")
+  call StoreString(translation, language, "I have Unpaused your Queued commands.", "Am pornit sirul de comenzi.")
+  call StoreString(translation, language, "I have Removed your last Queued command.", "Am scos ultima comanda din sir")
+  call StoreString(translation, language, "I have Queued the Attack/Guard location of current screen position.", "Am adaugat in sir comanda sa Atac/Apar locul determinat de ecran.")
+  call StoreString(translation, language, "I have Queued the currently selected unit to Attack/Guard.", "Am adaugat in sir comanda sa Atac/Apar unitatea selectata.")
+  call StoreString(translation, language, "Turned On/Off Automatic Strategy Change.", "Schimba On/Off schimbarea de strategie automata.")
+  call StoreString(translation, language, "Restrict", "Restrictioneaza")
+  call StoreString(translation, language, "No Attacks", "Fara atacuri")
+  call StoreString(translation, language, "No Creep Attacks", "Fara atacuri asupra neutrilor")
+  call StoreString(translation, language, "No Enemy Attacks", "Fara atacuri asupra inamicilor")
+  call StoreString(translation, language, "Farms", "Ferme")
+  call StoreString(translation, language, "Towers", "Turnuri")
+  call StoreString(translation, language, "Current screen", "Ecranul Actual")
+  call StoreString(translation, language, "Selected unit", "Unitatea Selectata")
+  call StoreString(translation, language, "Towerrush (Orc only)", "Towerrush (numai Orc)")
+  call StoreString(translation, language, "Start/Restart", "Incepe/Reincepe")
+  call StoreString(translation, language, "No Strategy Change", "Fara schimbare de strategie")
+  call StoreString(translation, language, "Build", "Produ")
+  call StoreString(translation, language, "Attack Here", "Ataca Aici")
+  call StoreString(translation, language, "Unpause", "Start")
+  call StoreString(translation, language, "Undo", "Undo")
+  call StoreString(translation, language, "attack select", "Ataca Unitate")
+  call StoreString(translation, language, "Air vs. Air", "Aer vs. Aer")
+  call StoreString(translation, language, "Air vs. Ground", "Aer vs. Sol")
+  call StoreString(translation, language, "Ground vs. Air", "Sol vs. Aer")
+  call StoreString(translation, language, "Ground vs. Ground", "Sol vs. Sol")
+endfunction
+function initLanguageRussian takes nothing returns nothing
+  set chat_no_ally = "Я тебе никогда не подчинюсь! Только через мой труп."
+  set dlghdr_choose_ally = "Выбрать союзника"
+  set dlghdr_choose_number = "Выбрать номер"
+  set dlghdr_choose_player = "Выбрать игрока"
+  set dlghdr_game_type = "Выбрать тип игры"
+  set dlghdr_root = "Выбрать команду"
+  set dlghdr_tribute_type = "Выбрать тип"
+  set dlghdr_tribute_amount = "Выбрать кол-во"
+  set dlgbutton_cancel = "Отмена"
+  set dlgbutton_all = "Все"
+  set dlgbutton_gold = "Золото"
+  set dlgbutton_lumber = "Древесина"
+  set dlgbutton_give_gold = "Дать золота"
+  set dlgbutton_give_lumber = "Дать древисины"
+  set dlgbutton_tribute = "Обмен ресурса"
+  set dlgbutton_commander = "Командир"
+  set dlgbutton_no_human = "Только AI"
+  set dlgbutton_ai_only = "Без командира"
+  call StoreString(translation, language, "AI Setting", "Настройки AI")
+  call StoreString(translation, language, "Chatter", "Чат")
+  call StoreString(translation, language, "Turned On/Off Computer Chatter.", "Включить / выключить чат компьютера.")
+  call StoreString(translation, language, "Turned On/Off Debug Mode.", "Включить / выключить дебаг режим.")
+  call StoreString(translation, language, "Turned On/Off Balancing Mode.", "Включить / выключить режим балансирования.")
+  call StoreString(translation, language, "Show", "Показать.")
+  call StoreString(translation, language, "Current Strategy", "Данная стратегия.")
+  call StoreString(translation, language, "Showing current strategy.", "Показываю данную стратегию.")
+  call StoreString(translation, language, "Strategy names", "Названия стратегий")
+  call StoreString(translation, language, "Change Strategy", "Сменить стратегию.")
+  call StoreString(translation, language, "Changes current strategy.", "Меняю стратегию.")
+  call StoreString(translation, language, "Cancel Orders", "Отменить приказы.")
+  call StoreString(translation, language, "All Orders", "Все приказы")
+  call StoreString(translation, language, "I have Canceled All commands you have given me so far.", "Я отменил все приказы, которые ты мне давал.")
+  call StoreString(translation, language, "Attack Orders", "Атаковать.")
+  call StoreString(translation, language, "I have Canceled all Attack commands you have given me so far.", "Я отменил все приказы атак, которые ты мне давал.")
+  call StoreString(translation, language, "Build Orders", "Строить.")
+  call StoreString(translation, language, "I have Canceled all Build commands you have given me so far.", "Я отменил все приказы по поводу строительства, которые ты мне давал.")
+  call StoreString(translation, language, "Queue", "Очередь.")
+  call StoreString(translation, language, "I have Canceled all Queued commands you have given me so far.", "Я отменил все приказы в очереди.")
+  call StoreString(translation, language, "I will Stop any current Attack.", "Я прекращаю атаку.")
+  call StoreString(translation, language, "I will not Attack Anything.", "Я никого не буду атаковать.")
+  call StoreString(translation, language, "I will not Attack Creeps.", "Я не буду бить бомжей.")
+  call StoreString(translation, language, "I will not Attack Enemies.", "Я не буду атаковать врагов.")
+  call StoreString(translation, language, "I will build Air2Air units now.", "Я буду строить юнитов воздух-воздух теперь.")
+  call StoreString(translation, language, "I will build Air2Ground units now.", "Я буду делать воздух-землю.")
+  call StoreString(translation, language, "I will build Ground2Air units now.", "Я буду строить земля-воздух сейчас.")
+  call StoreString(translation, language, "I will build Ground2Ground units now.", "Делаю землю-землю.")
+  call StoreString(translation, language, "I will build farms now.", "Строю фермы.")
+  call StoreString(translation, language, "I will build towers now.", "Строю башни.")
+  call StoreString(translation, language, "I will Attack/Guard the location of current screen position.", "Буду охранять / атаковать данное положение экрана.")
+  call StoreString(translation, language, "I will Attack/Guard the currently selected unit.", "Я буду атаковать / защищать выбранного юнита.")
+  call StoreString(translation, language, "I will Attack/Guard the specified player.", "Я буду атаковать / защищать выбранного игрока.")
+  call StoreString(translation, language, "I have Started or Restarted your Queued commands.", "Я начал выполнять очередь команд.")
+  call StoreString(translation, language, "I have Paused your Queued commands.", "Я отложил приказы в очереди.")
+  call StoreString(translation, language, "I have Unpaused your Queued commands.", "Я снова выполняю приказы в очереди.")
+  call StoreString(translation, language, "I have Removed your last Queued command.", "Убрал последнею в очереди команду.")
+  call StoreString(translation, language, "I have Queued the Attack/Guard location of current screen position.", "Приказание защищать / атаковать данное положение экрана в очереди.")
+  call StoreString(translation, language, "I have Queued the currently selected unit to Attack/Guard.", "Приказание защищать / атаковать выбранного юнита в очереди.")
+  call StoreString(translation, language, "Turned On/Off Automatic Strategy Change.", "Включил / выключил автоматический выбор стратегий.")
+  call StoreString(translation, language, "Restrict", "Запретить.")
+  call StoreString(translation, language, "No Attacks", "Не атаковать.")
+  call StoreString(translation, language, "No Creep Attacks", "Не атаковать крипов.")
+  call StoreString(translation, language, "No Enemy Attacks", "Не атаковать врагов.")
+  call StoreString(translation, language, "Farms", "Фермы")
+  call StoreString(translation, language, "Towers", "Башни")
+  call StoreString(translation, language, "Current screen", "Вид экрана")
+  call StoreString(translation, language, "Selected unit", "Выбр. юнит.")
+  call StoreString(translation, language, "Towerrush (Orc only)", "Товерраш (только для орка)")
+  call StoreString(translation, language, "Start/Restart", "Начать.")
+  call StoreString(translation, language, "No Strategy Change", "Не менять.")
+  call StoreString(translation, language, "Build", "Строить.")
+  call StoreString(translation, language, "Attack Here", "Атаковать тут.")
+  call StoreString(translation, language, "Unpause", "Снять с паузы.")
+  call StoreString(translation, language, "Undo", "Назад.")
+  call StoreString(translation, language, "attack select", "Выбор атаки.")
+  call StoreString(translation, language, "Air vs. Air", "Воздух-воздух.")
+  call StoreString(translation, language, "Air vs. Ground", "Воздух-земля.")
+  call StoreString(translation, language, "Ground vs. Air", "Земля-воздух.")
+  call StoreString(translation, language, "Ground vs. Ground", "Земля-земля.")
+endfunction
+function initLanguagePortuguese takes nothing returns nothing
+  set chat_no_ally = "Nunca vou te obedecer."
+  set dlghdr_choose_ally = "Aliado Escolhido"
+  set dlghdr_choose_number = "Escolha Número"
+  set dlghdr_choose_player = "Escolha Jogador"
+  set dlghdr_game_type = "Escolha Tipo de Jogo"
+  set dlghdr_root = "Escolha Comando"
+  set dlghdr_tribute_type = "Escolha Tipo de Tributo"
+  set dlghdr_tribute_amount = "Escolha Quantidade"
+  set dlgbutton_cancel = "Cancelar"
+  set dlgbutton_all = "Todos"
+  set dlgbutton_gold = "Ouro"
+  set dlgbutton_lumber = "Madeira"
+  set dlgbutton_give_gold = "Dar Ouro"
+  set dlgbutton_give_lumber = "Dar Madeira"
+  set dlgbutton_tribute = "Tribute"
+  set dlgbutton_commander = "Comandante"
+  set dlgbutton_no_human = "Computador Apenas"
+  set dlgbutton_ai_only = "Sem Comandante"
+endfunction
+function initLanguageNorwegian takes nothing returns nothing
+  set chat_no_ally = "Jeg går ikke etter dine ordre!"
+  set dlghdr_choose_ally = "Velg din allierte"
+  set dlghdr_choose_number = "Velg nummer"
+  set dlghdr_choose_player = "Velg spillere"
+  set dlghdr_game_type = "Velg spilletype"
+  set dlghdr_root = "Velg kommando"
+  set dlghdr_tribute_type = "Valg bidragsmetode"
+  set dlghdr_tribute_amount = "Velg bidragsstørrelse"
+  set dlgbutton_cancel = "Avbryt"
+  set dlgbutton_all = "Alle"
+  set dlgbutton_gold = "Gull"
+  set dlgbutton_lumber = "Trær"
+  set dlgbutton_tribute = "Bidrag"
+  set dlgbutton_commander = "Commander"
+  set dlgbutton_no_human = "Bare computere"
+  set dlgbutton_ai_only = "Ingen Commander"
+  call StoreString(translation, language, "AI Setting", "AI Innstillinger")
+  call StoreString(translation, language, "Chatter", "Chat")
+  call StoreString(translation, language, "Turned On/Off Computer Chatter.", "Skru av / på computer chatting.")
+  call StoreString(translation, language, "Turned On/Off Debug Mode.", "Skru av / på feilsøkingsmodus")
+  call StoreString(translation, language, "Turned On/Off Balancing Mode.", "Skru av / på balanserings modus")
+  call StoreString(translation, language, "Show", "Vise")
+  call StoreString(translation, language, "Current Strategy", "Aktuell strategi")
+  call StoreString(translation, language, "Showing current strategy.", "Viser aktuell strategi.")
+  call StoreString(translation, language, "Strategy names", "Strateginavn")
+  call StoreString(translation, language, "Change Strategy", "Bytt strategi")
+  call StoreString(translation, language, "Changes current strategy.", "Bytter aktuell strategi.")
+  call StoreString(translation, language, "Cancel Orders", "Avbryt order")
+  call StoreString(translation, language, "All Orders", "Alle ordrer")
+  call StoreString(translation, language, "I have Canceled All commands you have given me so far.", "Jeg har avbrutt alle kommandoer")
+  call StoreString(translation, language, "Attack Orders", "Angrepskommandoer")
+  call StoreString(translation, language, "I have Canceled all Attack commands you have given me so far.", "Jeg har avbrutt alle angrepskommandoer.")
+  call StoreString(translation, language, "Build Orders", "Byggekommandoer")
+  call StoreString(translation, language, "I have Canceled all Build commands you have given me so far.", "Jag har avbrutt alla byggekommandoer.")
+  call StoreString(translation, language, "Queue", "Følgekommandoer")
+  call StoreString(translation, language, "I have Canceled all Queued commands you have given me so far.", "Jag har avbrutt alla Følgekommandoer.")
+  call StoreString(translation, language, "I will Stop any current Attack.", "")
+  call StoreString(translation, language, "I will not Attack Anything.", "")
+  call StoreString(translation, language, "I will not Attack Creeps.", "")
+  call StoreString(translation, language, "I will not Attack Enemies.", "")
+  call StoreString(translation, language, "I will build Air2Air units now.", "")
+  call StoreString(translation, language, "I will build Air2Ground units now.", "")
+  call StoreString(translation, language, "I will build Ground2Air units now.", "")
+  call StoreString(translation, language, "I will build Ground2Ground units now.", "")
+  call StoreString(translation, language, "I will build farms now.", "")
+  call StoreString(translation, language, "I will build towers now.", "")
+  call StoreString(translation, language, "I will Attack/Guard the location of current screen position.", "")
+  call StoreString(translation, language, "I will Attack/Guard the currently selected unit.", "")
+  call StoreString(translation, language, "I will Attack/Guard the specified player.", "")
+  call StoreString(translation, language, "I have Started or Restarted your Queued commands.", "")
+  call StoreString(translation, language, "I have Paused your Queued commands.", "")
+  call StoreString(translation, language, "I have Unpaused your Queued commands.", "")
+  call StoreString(translation, language, "I have Removed your last Queued command.", "")
+  call StoreString(translation, language, "I have Queued the Attack/Guard location of current screen position.", "")
+  call StoreString(translation, language, "I have Queued the currently selected unit to Attack/Guard.", "")
+  call StoreString(translation, language, "Turned On/Off Automatic Strategy Change.", "")
+  call StoreString(translation, language, "Restrict", "")
+  call StoreString(translation, language, "No Attacks", "")
+  call StoreString(translation, language, "No Creep Attacks", "")
+  call StoreString(translation, language, "No Enemy Attacks", "")
+  call StoreString(translation, language, "Farms", "")
+  call StoreString(translation, language, "Towers", "")
+  call StoreString(translation, language, "Current screen", "")
+  call StoreString(translation, language, "Selected unit", "")
+  call StoreString(translation, language, "Start/Restart", "")
+  call StoreString(translation, language, "No Strategy Change", "")
+  call StoreString(translation, language, "Build", "")
+  call StoreString(translation, language, "Attack Here", "")
+  call StoreString(translation, language, "Unpause", "")
+  call StoreString(translation, language, "Undo", "")
+  call StoreString(translation, language, "attack select", "")
+  call StoreString(translation, language, "Air vs. Air", "")
+  call StoreString(translation, language, "Air vs. Ground", "")
+  call StoreString(translation, language, "Ground vs. Air", "")
+  call StoreString(translation, language, "Ground vs. Ground", "")
+endfunction
+function initLanguageChinese takes nothing returns nothing
+  set chat_no_ally = "ææä¸åä½ ç»çå¢?"
+  set dlghdr_choose_ally = "éæ©çå"
+  set dlghdr_choose_number = "éæ©éä¼"
+  set dlghdr_choose_player = "éæ©éå"
+  set dlghdr_game_type = "éæ©æ¸¸æç±»å"
+  set dlghdr_root = "éæ©ææ¥"
+  set dlghdr_tribute_type = "éæ©èµæºç±»å"
+  set dlghdr_tribute_amount = "éæ©èµæºæ°é"
+  set dlgbutton_cancel = "åæ¶"
+  set dlgbutton_all = "å¨é¨"
+  set dlgbutton_gold = "éå­"
+  set dlgbutton_lumber = "æ¨æ"
+  set dlgbutton_tribute = "èµæº"
+  set dlgbutton_commander = "ææ¥æ¨¡å¼"
+  set dlgbutton_no_human = "å¸¸è§æ¨¡å¼"
+  set dlgbutton_ai_only = "æºè½æ¨¡å¼"
+  call StoreString(translation, language, "Chatter", "èå¤©")
+  call StoreString(translation, language, "Turned On/Off Computer Chatter.", "å¼/å³è?")
+  call StoreString(translation, language, "Turned On/Off Debug Mode.", "å¼/å³ä¾¦?")
+  call StoreString(translation, language, "Turned On/Off Balancing Mode.", "å¼/å³å¹³? ¡¡")
+  call StoreString(translation, language, "Show", "æ¾ç¤ºä¿¡æ¯")
+  call StoreString(translation, language, "Current Strategy", "å½åææ¯")
+  call StoreString(translation, language, "Showing current strategy.", "æ¾ç¤ºå½åææ¯")
+  call StoreString(translation, language, "Strategy names", "ææ¯åç§°")
+  call StoreString(translation, language, "Change Strategy", "æ¹åææ¯")
+  call StoreString(translation, language, "Changes current strategy.", "æ¹åå½åææ¯")
+  call StoreString(translation, language, "Cancel Orders", "åæ¶å½ä»¤")
+  call StoreString(translation, language, "All Orders", "å¨é¨å½ä»¤")
+  call StoreString(translation, language, "I have Canceled All commands you have given me so far.", "æå·²ç»åæ¶å¸ç½®çå¨é¨å½ä»¤")
+  call StoreString(translation, language, "Attack Orders", "æ»å»")
+  call StoreString(translation, language, "I have Canceled all Attack commands you have given me so far.", "æå·²ç»åæ¶å¸ç½®çå¨é¨æ»å»å½ä»¤")
+  call StoreString(translation, language, "Build Orders", "å»ºè®¾")
+  call StoreString(translation, language, "I have Canceled all Build commands you have given me so far.", "æå·²ç»åæ¶å¸ç½®çå¨é¨å»ºè®¾å½ä»¤")
+  call StoreString(translation, language, "Queue", "å½ä»¤éå")
+  call StoreString(translation, language, "I have Canceled all Queued commands you have given me so far.", "æå·²ç»åæ¶å¸ç½®çå¨é¨ä¸ä¸æ­¥å½?")
+  call StoreString(translation, language, "I will Stop any current Attack.", "æå°åæ­¢å½åçå¨é¨è¿?")
+  call StoreString(translation, language, "I will not Attack Anything.", "æä¸ä¼æ»å»ä»»ä½ç®?")
+  call StoreString(translation, language, "I will not Attack Creeps.", "æä¸ä¼æ»å»ä¸­ç«ç?")
+  call StoreString(translation, language, "I will not Attack Enemies.", "æä¸ä¼æ»å»ææ¹å?")
+  call StoreString(translation, language, "I will build Air2Air units now.", "æå°è®­ç»ç©ºå¯¹ç©ºå?")
+  call StoreString(translation, language, "I will build Air2Ground units now.", "æå°è®­ç»ç©ºå¯¹å°å?")
+  call StoreString(translation, language, "I will build Ground2Air units now.", "æå°è®­ç»å°å¯¹ç©ºå?")
+  call StoreString(translation, language, "I will build Ground2Ground units now.", "æå°è®­ç»å°å¯¹å°å?")
+  call StoreString(translation, language, "I will build farms now.", "æè¦å»ºé ååºäº")
+  call StoreString(translation, language, "I will build towers now.", "æè¦å»ºé ç®­å¡äº")
+  call StoreString(translation, language, "I will Attack/Guard the location of current screen position.", "æå°æ»å»/é²å®å½åä½ç½®")
+  call StoreString(translation, language, "I will Attack/Guard the currently selected unit.", "æå°æ»å»/é²å®éå®åä½")
+  call StoreString(translation, language, "I will Attack/Guard the specified player.", "æå°æ»å»/é²å®éå®ç©å®¶")
+  call StoreString(translation, language, "I have Started or Restarted your Queued commands.", "æå·²ç»å¸ç½®æéæ°å¸ç½®ä½ çä¸ä¸æ­¥è¡?")
+  call StoreString(translation, language, "I have Paused your Queued commands.", "æå·²ç»æåå¸ç½®ä½ çä¸ä¸æ­¥è¡?")
+  call StoreString(translation, language, "I have Unpaused your Queued commands.", "æå·²ç»å¼å¯å¸ç½®ç»ä½ ä¸ä¸æ­¥è¡?")
+  call StoreString(translation, language, "I have Removed your last Queued command.", "æå·²ç»åæ¶æåå¸ç½®ç»ä½ çä¸ä¸æ­¥è¡?")
+  call StoreString(translation, language, "I have Queued the Attack/Guard location of current screen position.", "æå·²ç»è®¾å®æ»?é²å®å½åä½ç½®ä¸ºä¸ä¸æ­¥è¡?")
+  call StoreString(translation, language, "I have Queued the currently selected unit to Attack/Guard.", "æå·²ç»è®¾å®éæ©å½ååä½ä¸ºä¸ä¸æ­¥è¡?")
+  call StoreString(translation, language, "Turned On/Off Automatic Strategy Change.", "å¼?å³é­èªå¨å¤æ­")
+  call StoreString(translation, language, "Restrict", "éå¶")
+  call StoreString(translation, language, "No Attacks", "æ æ»?")
+  call StoreString(translation, language, "No Creep Attacks", "æ ä¸­ç«çç©æ»?")
+  call StoreString(translation, language, "No Enemy Attacks", "æ æäººæ»?")
+  call StoreString(translation, language, "Farms", "ååº")
+  call StoreString(translation, language, "Towers", "ç®­å¡")
+  call StoreString(translation, language, "Current screen", "å½åå°ç¹")
+  call StoreString(translation, language, "Selected unit", "éæ©åä½")
+  call StoreString(translation, language, "Towerrush (Orc only)", "å¡RUA")
+  call StoreString(translation, language, "Start/Restart", "å¼?éæ°å¼?")
+  call StoreString(translation, language, "No Strategy Change", "æè®¡åè¡?")
+  call StoreString(translation, language, "Build", "å»º?")
+  call StoreString(translation, language, "Attack Here", "æ»å»")
+  call StoreString(translation, language, "Unpause", "ç»§ç»­")
+  call StoreString(translation, language, "Undo", "éå")
+  call StoreString(translation, language, "attack select", "æ»å»éæ©")
+  call StoreString(translation, language, "Air vs. Air", "ç©ºå?")
+  call StoreString(translation, language, "Air vs. Ground", "ç©ºå?")
+  call StoreString(translation, language, "Ground vs. Air", "å°å?")
+  call StoreString(translation, language, "Ground vs. Ground", "å°å?")
+endfunction
+
+function LanguageDlgResponse takes nothing returns nothing
+  local button b = GetClickedButton()
+  if false then
+  elseif b == English_button then
+    set language = "English"
+    call SendToAllAIs(71,0)
+    call initLanguageEnglish()
+  elseif b == Deutsch_button then
+    set language = "Deutsch"
+    call SendToAllAIs(71,1)
+    call initLanguageDeutsch()
+  elseif b == Swedish_button then
+    set language = "Swedish"
+    call SendToAllAIs(71,2)
+    call initLanguageSwedish()
+  elseif b == French_button then
+    set language = "French"
+    call SendToAllAIs(71,3)
+    call initLanguageFrench()
+  elseif b == Spanish_button then
+    set language = "Spanish"
+    call SendToAllAIs(71,4)
+    call initLanguageSpanish()
+  elseif b == Romanian_button then
+    set language = "Romanian"
+    call SendToAllAIs(71,5)
+    call initLanguageRomanian()
+  elseif b == Russian_button then
+    set language = "Russian"
+    call SendToAllAIs(71,6)
+    call initLanguageRussian()
+  elseif b == Portuguese_button then
+    set language = "Portuguese"
+    call SendToAllAIs(71,7)
+    call initLanguagePortuguese()
+  elseif b == Norwegian_button then
+    set language = "Norwegian"
+    call SendToAllAIs(71,8)
+    call initLanguageNorwegian()
+  elseif b == Chinese_button then
+    set language = "Chinese"
+    call SendToAllAIs(71,9)
+    call initLanguageChinese()
+  endif
+    call PauseAllUnitsBJ(false)
+  call GameStartDlg()
+endfunction
+
+function LanguageDefault takes nothing returns nothing
+  if false then
+  elseif language == "English" then
+    call SendToAllAIs(71,0)
+    call initLanguageEnglish()
+  elseif language == "Deutsch" then
+    call SendToAllAIs(71,1)
+    call initLanguageDeutsch()
+  elseif language == "Swedish" then
+    call SendToAllAIs(71,2)
+    call initLanguageSwedish()
+  elseif language == "French" then
+    call SendToAllAIs(71,3)
+    call initLanguageFrench()
+  elseif language == "Spanish" then
+    call SendToAllAIs(71,4)
+    call initLanguageSpanish()
+  elseif language == "Romanian" then
+    call SendToAllAIs(71,5)
+    call initLanguageRomanian()
+  elseif language == "Russian" then
+    call SendToAllAIs(71,6)
+    call initLanguageRussian()
+  elseif language == "Portuguese" then
+    call SendToAllAIs(71,7)
+    call initLanguagePortuguese()
+  elseif language == "Norwegian" then
+    call SendToAllAIs(71,8)
+    call initLanguageNorwegian()
+  elseif language == "Chinese" then
+    call SendToAllAIs(71,9)
+    call initLanguageChinese()
+  endif
+   call PauseAllUnitsBJ(false)
+  call GameStartDlg()
+endfunction
+
+function LanguageDlg takes nothing returns nothing
+  local integer host = GetFirstHuman()
+  
+  // Need to pause computer ai and players
+  call PauseAllUnitsBJ(true)
+  
+  if language != "" or host == -1 then
+    call LanguageDefault()
+    return
+  endif
+  set language_dialog = DialogCreate()
+  call DialogSetMessage(language_dialog, "Choose Language")
+  set English_button = DialogAddButton(language_dialog, "English", 69)
+  set Deutsch_button = DialogAddButton(language_dialog, "Deutsch", 68)
+  set Swedish_button = DialogAddButton(language_dialog, "Swedish", 83)
+  set French_button = DialogAddButton(language_dialog, "French", 70)
+  set Spanish_button = DialogAddButton(language_dialog, "Spanish", 80)
+  set Romanian_button = DialogAddButton(language_dialog, "Romanian", 82)
+  set Russian_button = DialogAddButton(language_dialog, "Russian", 85)
+  set Portuguese_button = DialogAddButton(language_dialog, "Portuguese", 84)
+  set Norwegian_button = DialogAddButton(language_dialog, "Norwegian", 78)
+  set Chinese_button = DialogAddButton(language_dialog, "Chinese", 67)
+  set language_trigger = CreateTrigger()
+  call TriggerRegisterDialogEvent(language_trigger, language_dialog)
+  call TriggerAddAction(language_trigger, function LanguageDlgResponse)
+
+  call DialogDisplay(Player(host), language_dialog, true)
+endfunction
+
+function InitCommander takes nothing returns nothing
+  local timer t = CreateTimer()
+  call TimerStart(t,1.0, false, function LanguageDlg)
+endfunction
+
+
+
+//***************************************************************************
+//*
+//*  Blizzard.j Initialization
+//*
+//***************************************************************************
+
+//===========================================================================
+function SetDNCSoundsDawn takes nothing returns nothing
+    if bj_useDawnDuskSounds then
+        call StartSound(bj_dawnSound)
+    endif
+endfunction
+
+//===========================================================================
+function SetDNCSoundsDusk takes nothing returns nothing
+    if bj_useDawnDuskSounds then
+        call StartSound(bj_duskSound)
+    endif
+endfunction
+
+//===========================================================================
+function SetDNCSoundsDay takes nothing returns nothing
+    local real ToD = GetTimeOfDay()
+
+    if (ToD >= bj_TOD_DAWN and ToD < bj_TOD_DUSK) and not bj_dncIsDaytime then
+        set bj_dncIsDaytime = true
+
+        // change ambient sounds
+        call StopSound(bj_nightAmbientSound, false, true)
+        call StartSound(bj_dayAmbientSound)
+    endif
+endfunction
+
+//===========================================================================
+function SetDNCSoundsNight takes nothing returns nothing
+    local real ToD = GetTimeOfDay()
+
+    if (ToD < bj_TOD_DAWN or ToD >= bj_TOD_DUSK) and bj_dncIsDaytime then
+        set bj_dncIsDaytime = false
+
+        // change ambient sounds
+        call StopSound(bj_dayAmbientSound, false, true)
+        call StartSound(bj_nightAmbientSound)
+    endif
+endfunction
+
+//===========================================================================
+function InitDNCSounds takes nothing returns nothing
+    // Create sounds to be played at dawn and dusk.
+    set bj_dawnSound = CreateSoundFromLabel("RoosterSound", false, false, false, 10000, 10000)
+    set bj_duskSound = CreateSoundFromLabel("WolfSound", false, false, false, 10000, 10000)
+
+    // Set up triggers to respond to dawn and dusk.
+    set bj_dncSoundsDawn = CreateTrigger()
+    call TriggerRegisterGameStateEvent(bj_dncSoundsDawn, GAME_STATE_TIME_OF_DAY, EQUAL, bj_TOD_DAWN)
+    call TriggerAddAction(bj_dncSoundsDawn, function SetDNCSoundsDawn)
+
+    set bj_dncSoundsDusk = CreateTrigger()
+    call TriggerRegisterGameStateEvent(bj_dncSoundsDusk, GAME_STATE_TIME_OF_DAY, EQUAL, bj_TOD_DUSK)
+    call TriggerAddAction(bj_dncSoundsDusk, function SetDNCSoundsDusk)
+
+    // Set up triggers to respond to changes from day to night or vice-versa.
+    set bj_dncSoundsDay = CreateTrigger()
+    call TriggerRegisterGameStateEvent(bj_dncSoundsDay,   GAME_STATE_TIME_OF_DAY, GREATER_THAN_OR_EQUAL, bj_TOD_DAWN)
+    call TriggerRegisterGameStateEvent(bj_dncSoundsDay,   GAME_STATE_TIME_OF_DAY, LESS_THAN,             bj_TOD_DUSK)
+    call TriggerAddAction(bj_dncSoundsDay, function SetDNCSoundsDay)
+
+    set bj_dncSoundsNight = CreateTrigger()
+    call TriggerRegisterGameStateEvent(bj_dncSoundsNight, GAME_STATE_TIME_OF_DAY, LESS_THAN,             bj_TOD_DAWN)
+    call TriggerRegisterGameStateEvent(bj_dncSoundsNight, GAME_STATE_TIME_OF_DAY, GREATER_THAN_OR_EQUAL, bj_TOD_DUSK)
+    call TriggerAddAction(bj_dncSoundsNight, function SetDNCSoundsNight)
+endfunction
+
+//===========================================================================
+function InitBlizzardGlobals takes nothing returns nothing
+    local integer index
+    local integer userControlledPlayers
+    local version v
+
+    // Init filter function vars
+    set filterIssueHauntOrderAtLocBJ = Filter(function IssueHauntOrderAtLocBJFilter)
+    set filterEnumDestructablesInCircleBJ = Filter(function EnumDestructablesInCircleBJFilter)
+    set filterGetUnitsInRectOfPlayer = Filter(function GetUnitsInRectOfPlayerFilter)
+    set filterGetUnitsOfTypeIdAll = Filter(function GetUnitsOfTypeIdAllFilter)
+    set filterGetUnitsOfPlayerAndTypeId = Filter(function GetUnitsOfPlayerAndTypeIdFilter)
+    set filterMeleeTrainedUnitIsHeroBJ = Filter(function MeleeTrainedUnitIsHeroBJFilter)
+    set filterLivingPlayerUnitsOfTypeId = Filter(function LivingPlayerUnitsOfTypeIdFilter)
+
+    // Init force presets
+    set index = 0
+    loop
+        exitwhen index == bj_MAX_PLAYER_SLOTS
+        set bj_FORCE_PLAYER[index] = CreateForce()
+        call ForceAddPlayer(bj_FORCE_PLAYER[index], Player(index))
+        set index = index + 1
+    endloop
+
+    set bj_FORCE_ALL_PLAYERS = CreateForce()
+    call ForceEnumPlayers(bj_FORCE_ALL_PLAYERS, null)
+
+    // Init Cinematic Mode history
+    set bj_cineModePriorSpeed = GetGameSpeed()
+    set bj_cineModePriorFogSetting = IsFogEnabled()
+    set bj_cineModePriorMaskSetting = IsFogMaskEnabled()
+
+    // Init Trigger Queue
+    set index = 0
+    loop
+        exitwhen index >= bj_MAX_QUEUED_TRIGGERS
+        set bj_queuedExecTriggers[index] = null
+        set bj_queuedExecUseConds[index] = false
+        set index = index + 1
+    endloop
+
+    // Init singleplayer check
+    set bj_isSinglePlayer = false
+    set userControlledPlayers = 0
+    set index = 0
+    loop
+        exitwhen index >= bj_MAX_PLAYERS
+        if (GetPlayerController(Player(index)) == MAP_CONTROL_USER and GetPlayerSlotState(Player(index)) == PLAYER_SLOT_STATE_PLAYING) then
+            set userControlledPlayers = userControlledPlayers + 1
+        endif
+        set index = index + 1
+    endloop
+    set bj_isSinglePlayer = (userControlledPlayers == 1)
+
+    // Init sounds
+    //set bj_pingMinimapSound = CreateSoundFromLabel("AutoCastButtonClick", false, false, false, 10000, 10000)
+    set bj_rescueSound = CreateSoundFromLabel("Rescue", false, false, false, 10000, 10000)
+    set bj_questDiscoveredSound = CreateSoundFromLabel("QuestNew", false, false, false, 10000, 10000)
+    set bj_questUpdatedSound = CreateSoundFromLabel("QuestUpdate", false, false, false, 10000, 10000)
+    set bj_questCompletedSound = CreateSoundFromLabel("QuestCompleted", false, false, false, 10000, 10000)
+    set bj_questFailedSound = CreateSoundFromLabel("QuestFailed", false, false, false, 10000, 10000)
+    set bj_questHintSound = CreateSoundFromLabel("Hint", false, false, false, 10000, 10000)
+    set bj_questSecretSound = CreateSoundFromLabel("SecretFound", false, false, false, 10000, 10000)
+    set bj_questItemAcquiredSound = CreateSoundFromLabel("ItemReward", false, false, false, 10000, 10000)
+    set bj_questWarningSound = CreateSoundFromLabel("Warning", false, false, false, 10000, 10000)
+    set bj_victoryDialogSound = CreateSoundFromLabel("QuestCompleted", false, false, false, 10000, 10000)
+    set bj_defeatDialogSound = CreateSoundFromLabel("QuestFailed", false, false, false, 10000, 10000)
+
+    // Init corpse creation triggers.
+    call DelayedSuspendDecayCreate()
+
+    // Init version-specific data
+    set v = VersionGet()
+    if (v == VERSION_REIGN_OF_CHAOS) then
+        set bj_MELEE_MAX_TWINKED_HEROES = bj_MELEE_MAX_TWINKED_HEROES_V0
+    else
+        set bj_MELEE_MAX_TWINKED_HEROES = bj_MELEE_MAX_TWINKED_HEROES_V1
+    endif
+endfunction
+
+//===========================================================================
+function InitQueuedTriggers takes nothing returns nothing
+    set bj_queuedExecTimeout = CreateTrigger()
+    call TriggerRegisterTimerExpireEvent(bj_queuedExecTimeout, bj_queuedExecTimeoutTimer)
+    call TriggerAddAction(bj_queuedExecTimeout, function QueuedTriggerDoneBJ)
+endfunction
+
+//===========================================================================
+function InitMapRects takes nothing returns nothing
+    set bj_mapInitialPlayableArea = Rect(GetCameraBoundMinX()-GetCameraMargin(CAMERA_MARGIN_LEFT), GetCameraBoundMinY()-GetCameraMargin(CAMERA_MARGIN_BOTTOM), GetCameraBoundMaxX()+GetCameraMargin(CAMERA_MARGIN_RIGHT), GetCameraBoundMaxY()+GetCameraMargin(CAMERA_MARGIN_TOP))
+    set bj_mapInitialCameraBounds = GetCurrentCameraBoundsMapRectBJ()
+endfunction
+
+//===========================================================================
+function InitSummonableCaps takes nothing returns nothing
+    local integer index
+
+    set index = 0
+    loop
+        // upgraded units
+        // Note: Only do this if the corresponding upgrade is not yet researched
+        // Barrage - Siege Engines
+        if (not GetPlayerTechResearched(Player(index), 'Rhrt', true)) then
+            call SetPlayerTechMaxAllowed(Player(index), 'hrtt', 0)
+        endif
+
+        // Berserker Upgrade - Troll Berserkers
+        if (not GetPlayerTechResearched(Player(index), 'Robk', true)) then
+            call SetPlayerTechMaxAllowed(Player(index), 'otbk', 0)
+        endif
+
+        // max skeletons per player
+        call SetPlayerTechMaxAllowed(Player(index), 'uske', bj_MAX_SKELETONS)
+
+        set index = index + 1
+        exitwhen index == bj_MAX_PLAYERS
+    endloop
+endfunction
+
+//===========================================================================
+// Update the per-class stock limits.
+//
+function UpdateStockAvailability takes item whichItem returns nothing
+    local itemtype iType  = GetItemType(whichItem)
+    local integer  iLevel = GetItemLevel(whichItem)
+
+    // Update allowed type/level combinations.
+    if (iType == ITEM_TYPE_PERMANENT) then
+        set bj_stockAllowedPermanent[iLevel] = true
+    elseif (iType == ITEM_TYPE_CHARGED) then
+        set bj_stockAllowedCharged[iLevel] = true
+    elseif (iType == ITEM_TYPE_ARTIFACT) then
+        set bj_stockAllowedArtifact[iLevel] = true
+    else
+        // Not interested in this item type - ignore the item.
+    endif
+endfunction
+
+//===========================================================================
+// Find a sellable item of the given type and level, and then add it.
+//
+function UpdateEachStockBuildingEnum takes nothing returns nothing
+    local integer iteration = 0
+    local integer pickedItemId
+
+    loop
+        set pickedItemId = ChooseRandomItemEx(bj_stockPickedItemType, bj_stockPickedItemLevel)
+        exitwhen IsItemIdSellable(pickedItemId)
+
+        // If we get hung up on an entire class/level combo of unsellable
+        // items, or a very unlucky series of random numbers, give up.
+        set iteration = iteration + 1
+        if (iteration > bj_STOCK_MAX_ITERATIONS) then
+            return
+        endif
+    endloop
+    call AddItemToStock(GetEnumUnit(), pickedItemId, 1, 1)
+endfunction
+
+//===========================================================================
+function UpdateEachStockBuilding takes itemtype iType, integer iLevel returns nothing
+    local group g
+
+    set bj_stockPickedItemType = iType
+    set bj_stockPickedItemLevel = iLevel
+
+    set g = CreateGroup()
+    call GroupEnumUnitsOfType(g, "marketplace", null)
+    call ForGroup(g, function UpdateEachStockBuildingEnum)
+    call DestroyGroup(g)
+endfunction
+
+//===========================================================================
+// Update stock inventory.
+//
+function PerformStockUpdates takes nothing returns nothing
+    local integer  pickedItemId
+    local itemtype pickedItemType
+    local integer  pickedItemLevel = 0
+    local integer  allowedCombinations = 0
+    local integer  iLevel
+
+    // Give each type/level combination a chance of being picked.
+    set iLevel = 1
+    loop
+        if (bj_stockAllowedPermanent[iLevel]) then
+            set allowedCombinations = allowedCombinations + 1
+            if (GetRandomInt(1, allowedCombinations) == 1) then
+                set pickedItemType = ITEM_TYPE_PERMANENT
+                set pickedItemLevel = iLevel
+            endif
+        endif
+        if (bj_stockAllowedCharged[iLevel]) then
+            set allowedCombinations = allowedCombinations + 1
+            if (GetRandomInt(1, allowedCombinations) == 1) then
+                set pickedItemType = ITEM_TYPE_CHARGED
+                set pickedItemLevel = iLevel
+            endif
+        endif
+        if (bj_stockAllowedArtifact[iLevel]) then
+            set allowedCombinations = allowedCombinations + 1
+            if (GetRandomInt(1, allowedCombinations) == 1) then
+                set pickedItemType = ITEM_TYPE_ARTIFACT
+                set pickedItemLevel = iLevel
+            endif
+        endif
+
+        set iLevel = iLevel + 1
+        exitwhen iLevel > bj_MAX_ITEM_LEVEL
+    endloop
+
+    // Make sure we found a valid item type to add.
+    if (allowedCombinations == 0) then
+        return
+    endif
+
+    call UpdateEachStockBuilding(pickedItemType, pickedItemLevel)
+endfunction
+
+//===========================================================================
+// Perform the first update, and then arrange future updates.
+//
+function StartStockUpdates takes nothing returns nothing
+    call PerformStockUpdates()
+    call TimerStart(bj_stockUpdateTimer, bj_STOCK_RESTOCK_INTERVAL, true, function PerformStockUpdates)
+endfunction
+
+//===========================================================================
+function RemovePurchasedItem takes nothing returns nothing
+    call RemoveItemFromStock(GetSellingUnit(), GetItemTypeId(GetSoldItem()))
+endfunction
+
+//===========================================================================
+function InitNeutralBuildings takes nothing returns nothing
+    local integer iLevel
+
+    // Chart of allowed stock items.
+    set iLevel = 0
+    loop
+        set bj_stockAllowedPermanent[iLevel] = false
+        set bj_stockAllowedCharged[iLevel] = false
+        set bj_stockAllowedArtifact[iLevel] = false
+        set iLevel = iLevel + 1
+        exitwhen iLevel > bj_MAX_ITEM_LEVEL
+    endloop
+
+    // Limit stock inventory slots.
+    call SetAllItemTypeSlots(bj_MAX_STOCK_ITEM_SLOTS)
+    call SetAllUnitTypeSlots(bj_MAX_STOCK_UNIT_SLOTS)
+
+    // Arrange the first update.
+    set bj_stockUpdateTimer = CreateTimer()
+    call TimerStart(bj_stockUpdateTimer, bj_STOCK_RESTOCK_INITIAL_DELAY, false, function StartStockUpdates)
+
+    // Set up a trigger to fire whenever an item is sold.
+    set bj_stockItemPurchased = CreateTrigger()
+    call TriggerRegisterPlayerUnitEvent(bj_stockItemPurchased, Player(PLAYER_NEUTRAL_PASSIVE), EVENT_PLAYER_UNIT_SELL_ITEM, null)
+    call TriggerAddAction(bj_stockItemPurchased, function RemovePurchasedItem)
+endfunction
+
+//===========================================================================
+function MarkGameStarted takes nothing returns nothing
+    set bj_gameStarted = true
+    call DestroyTimer(bj_gameStartedTimer)
+endfunction
+
+//===========================================================================
+function DetectGameStarted takes nothing returns nothing
+    set bj_gameStartedTimer = CreateTimer()
+    call TimerStart(bj_gameStartedTimer, bj_GAME_STARTED_THRESHOLD, false, function MarkGameStarted)
+endfunction
+
+//===========================================================================
+function InitBlizzard takes nothing returns nothing
+    // Set up the Neutral Victim player slot, to torture the abandoned units
+    // of defeated players.  Since some triggers expect this player slot to
+    // exist, this is performed for all maps.
+    call ConfigureNeutralVictim()
+
+    call InitBlizzardGlobals()
+    call InitQueuedTriggers()
+    call InitRescuableBehaviorBJ()
+    call InitDNCSounds()
+    call InitMapRects()
+    call InitSummonableCaps()
+    call InitNeutralBuildings()
+
+    call InitCommander()
+
+    call DetectGameStarted()
+endfunction
+
+
+
+//***************************************************************************
+//*
+//*  Random distribution
+//*
+//*  Used to select a random object from a given distribution of chances
+//*
+//*  - RandomDistReset clears the distribution list
+//*
+//*  - RandomDistAddItem adds a new object to the distribution list
+//*    with a given identifier and an integer chance to be chosen
+//*
+//*  - RandomDistChoose will use the current distribution list to choose
+//*    one of the objects randomly based on the chance distribution
+//*  
+//*  Note that the chances are effectively normalized by their sum,
+//*  so only the relative values of each chance are important
+//*
+//***************************************************************************
+
+//===========================================================================
+function RandomDistReset takes nothing returns nothing
+    set bj_randDistCount = 0
+endfunction
+
+//===========================================================================
+function RandomDistAddItem takes integer inID, integer inChance returns nothing
+    set bj_randDistID[bj_randDistCount] = inID
+    set bj_randDistChance[bj_randDistCount] = inChance
+    set bj_randDistCount = bj_randDistCount + 1
+endfunction
+
+//===========================================================================
+function RandomDistChoose takes nothing returns integer
+    local integer sum = 0
+    local integer chance = 0
+    local integer index
+    local integer foundID = -1
+    local boolean done
+
+    // No items?
+    if (bj_randDistCount == 0) then
+        return -1
+    endif
+
+    // Find sum of all chances
+    set index = 0
+    loop
+        set sum = sum + bj_randDistChance[index]
+
+        set index = index + 1
+        exitwhen index == bj_randDistCount
+    endloop
+
+    // Choose random number within the total range
+    set chance = GetRandomInt(1, sum)
+
+    // Find ID which corresponds to this chance
+    set index = 0
+    set sum = 0
+    set done = false
+    loop
+        set sum = sum + bj_randDistChance[index]
+
+        if (chance <= sum) then
+            set foundID = bj_randDistID[index]
+            set done = true
+        endif
+
+        set index = index + 1
+        if (index == bj_randDistCount) then
+            set done = true
+        endif
+
+        exitwhen done == true
+    endloop
+
+    return foundID
+endfunction
+
+
+
+//***************************************************************************
+//*
+//*  Drop item
+//*
+//*  Makes the given unit drop the given item
+//*
+//*  Note: This could potentially cause problems if the unit is standing
+//*        right on the edge of an unpathable area and happens to drop the
+//*        item into the unpathable area where nobody can get it...
+//*
+//***************************************************************************
+
+function UnitDropItem takes unit inUnit, integer inItemID returns item
+    local real x
+    local real y
+    local real radius = 32
+    local real unitX
+    local real unitY
+    local item droppedItem
+
+    if (inItemID == -1) then
+        return null
+    endif
+
+    set unitX = GetUnitX(inUnit)
+    set unitY = GetUnitY(inUnit)
+
+    set x = GetRandomReal(unitX - radius, unitX + radius)
+    set y = GetRandomReal(unitY - radius, unitY + radius)
+
+    set droppedItem = CreateItem(inItemID, x, y)
+
+    call SetItemDropID(droppedItem, GetUnitTypeId(inUnit))
+    call UpdateStockAvailability(droppedItem)
+
+    return droppedItem
+endfunction
+
+//===========================================================================
+function WidgetDropItem takes widget inWidget, integer inItemID returns item
+    local real x
+    local real y
+    local real radius = 32
+    local real widgetX
+    local real widgetY
+
+    if (inItemID == -1) then
+        return null
+    endif
+
+    set widgetX = GetWidgetX(inWidget)
+    set widgetY = GetWidgetY(inWidget)
+
+    set x = GetRandomReal(widgetX - radius, widgetX + radius)
+    set y = GetRandomReal(widgetY - radius, widgetY + radius)
+
+    return CreateItem(inItemID, x, y)
+endfunction

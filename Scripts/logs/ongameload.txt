@@ -2,4 +2,14 @@ loading kernel32.dll
 loading blizzard.ax
 loading Game.dll
 Game.dll loaded...pausing and running script
-Register natives signature found at: 5
+Register natives signature found at: 104b150
+injecting bin\war3err.dll
+Waited 49
+injecting bin\loadmpq.dll
+Waited -1
+Game.dll hacked, proceeding
+loading kernel32.dll
+Waited for 0 before letting RegisterNatives run
+loading mswsock.dll
+loading ws2_32.dll
+loading kernel32.dll

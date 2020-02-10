@@ -1,6 +1,6 @@
 //===========================================================================
 // Blizzard.j ( define Jass2 functions that need to be in every map script )
-// Version 1.24
+// Version 1.20c
 //===========================================================================
 
 
@@ -369,19 +369,12 @@ globals
     constant integer   bj_GATEOPERATION_OPEN       = 1
     constant integer   bj_GATEOPERATION_DESTROY    = 2
 
-	// Game cache value types
-	constant integer   bj_GAMECACHE_BOOLEAN                 = 0
-	constant integer   bj_GAMECACHE_INTEGER                 = 1
-	constant integer   bj_GAMECACHE_REAL                    = 2
-	constant integer   bj_GAMECACHE_UNIT                    = 3
-	constant integer   bj_GAMECACHE_STRING                  = 4
-	
-	// Hashtable value types
-	constant integer   bj_HASHTABLE_BOOLEAN                 = 0
-	constant integer   bj_HASHTABLE_INTEGER                 = 1
-	constant integer   bj_HASHTABLE_REAL                    = 2
-	constant integer   bj_HASHTABLE_STRING                  = 3
-	constant integer   bj_HASHTABLE_HANDLE                  = 4
+    // Game cache value types
+    constant integer   bj_GAMECACHE_BOOLEAN        = 0
+    constant integer   bj_GAMECACHE_INTEGER        = 1
+    constant integer   bj_GAMECACHE_REAL           = 2
+    constant integer   bj_GAMECACHE_UNIT           = 3
+    constant integer   bj_GAMECACHE_STRING         = 4
 
     // Item status types
     constant integer   bj_ITEM_STATUS_HIDDEN       = 0
@@ -611,7 +604,6 @@ globals
     string             bj_lastPlayedMusic          = ""
     real               bj_lastTransmissionDuration = 0
     gamecache          bj_lastCreatedGameCache     = null
-    hashtable          bj_lastCreatedHashtable     = null
     unit               bj_lastLoadedUnit           = null
     button             bj_lastCreatedButton        = null
     unit               bj_lastReplacedUnit         = null

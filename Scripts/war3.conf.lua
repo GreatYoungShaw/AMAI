@@ -5,4 +5,4 @@
  grim.injectdll(proc,"bin\\ongameload.dll")
 -- grim.injectdll(proc,"bin\\listfile.dll")
 -- grim.injectdll(proc,"bin\\nreplace.dll")
--- grim.injectdll(proc,"bin\\loadmpq.dll")
+ grim.injectdll(proc,"bin\\loadmpq.dll")

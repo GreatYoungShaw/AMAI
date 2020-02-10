@@ -99,8 +99,7 @@
 
     leaderboard color_board = null
     
-    //gamecache translation = InitGameCache("Commander.w3v")
-	hashtable translation = InitHashtable()
+    gamecache translation = InitGameCache("Commander.w3v")
 
 #INCLUDE <Blizzard2.j>
 
@@ -417,44 +416,39 @@ function Convert2Player takes string Comp, boolean all_allowed returns player
   //Required Variables
   local integer j = 0
   local playercolor CColor = ColorPlayer(Comp)  //Gets the player color
-  local player theplayer = null
 
   if Comp == "All" then
     if all_allowed then
-	  set theplayer = Player(14)
-      //return Player(14)
+      return Player(14)
     else
       call DisplayToTP("ERROR, All is not allowed here" )
-      //return null
+      return null
     endif
-	
-  elseif (CColor == null) then
-   //Makes Sure color was typed Correctly  
+  endif
+
+  //Makes Sure color was typed Correctly
+  if (CColor == null) then
     //Makes sure number is 0 or bigger and 11 or smaller
     if (S2I(Comp) >= 0) and (S2I(Comp) <= 11) then
-	  set theplayer = Player(S2I(Comp))
-      //return Player(S2I(Comp))
+      return Player(S2I(Comp))
     else
       call DisplayToTP("ERROR, you mistyped the player id" )
-      //return null
+      return null
     endif
-  else
+  endif
+  
   //Compares the color until we get a match then stores that player
   loop
-    exitwhen((CColor == GetPlayerColor(Player(j))) or (j > 12))
+    exitwhen(CColor == GetPlayerColor(Player(j)))
     set j = j + 1
     if (j > 12) then
       call DisplayToTP("ERROR, you mistyped the player Color or Command word." )
-      //return null
+      return null
     endif
   endloop
-	if j <= 12 then
-		set theplayer = Player(j)
-	endif
-  endif
 
   //Returns player
-  return theplayer
+  return Player(j)
 
 endfunction
 
@@ -926,8 +920,8 @@ function TributeAmountDialogResponse takes nothing returns nothing
 endfunction
 
 function Translation takes string s returns string
-  if HaveSavedString(translation, StringHash(language), StringHash(s)) then
-    return LoadStr(translation, StringHash(language), StringHash(s))
+  if HaveStoredString(translation, language, s) then
+    return GetStoredString(translation, language, s)
   else
     return s
   endif
@@ -1300,7 +1294,7 @@ function initLanguage%1 takes nothing returns nothing
   set %1 = "%2"
 #ENDINCLUDE
 #INCLUDETABLE <Languages\%1\CommandsTrans.txt> #ENC:%4 #EFR
-  call SaveStr(translation, StringHash(language), StringHash("%1"), "%2")
+  call StoreString(translation, language, "%1", "%2")
 #ENDINCLUDE
 endfunction
 #ENDINCLUDE

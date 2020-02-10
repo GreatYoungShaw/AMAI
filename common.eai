@@ -814,44 +814,18 @@ globals
     string chat_no_orc = ""
     string militia_expansion_chat = ""
     
-    //gamecache translation_map = InitGameCache("AMAI_TM.w3v")
-	hashtable translation_map = InitHashtable()
+    gamecache translation_map = InitGameCache("AMAI_TM.w3v")
     string array translation
     integer translation_length = 0
     
-    //gamecache additional_info = InitGameCache("AMAI_AI.w3v") // Used for harrass data
-    //gamecache com = InitGameCache("AMAI_Com.w3v")
-	hashtable additional_info = InitHashtable()
-	constant integer START_STRENGTH = 0
-	constant integer AVOID_TOWERS = 1
-	constant integer STRENGTH_LIMIT = 2
-	constant integer STATE_ATTACKING = 3
-	constant integer FLEE_PERCENT = 4
-	constant integer FLEE_NUMBER = 5
-	constant integer INVISIBLE_COUNT = 6
-	constant integer LOCX = 7
-	constant integer LOCY = 8
-	constant integer STATE_RETREAT = 9
-	constant integer WINDWALK_COUNT = 10
-	hashtable com = InitHashtable()
-	constant integer PROFILE_USED = 0
-	constant integer TEAM_STATEGY_INUSE = 1
-	constant integer IS_AMAI = 2
-	constant integer RACE = 3
-	constant integer RACE_PREF = 4
-	constant integer USE_SPECIAL_RACES = 5
-	//gamecache settings = InitGameCache("AMAI_Set.w3v")
+    gamecache additional_info = InitGameCache("AMAI_AI.w3v") // Used for harrass data
+    gamecache com = InitGameCache("AMAI_Com.w3v")
+	gamecache settings = InitGameCache("AMAI_Set.w3v")
     
     string array char_table
-	string array char_bug_table
-	integer char_table_length = 0
-	hashtable language_table = InitHashtable()
-	constant integer CHAR_TABLE = 0
-	constant integer CHAT_VARS_TABLE = 1
     string array chat_vars
     integer chat_vars_length = 1
-    //gamecache chat_vars_map = InitGameCache("AMAI_CVM.w3v")
-	//hashtable chat_vars_map = InitHashtable()
+    gamecache chat_vars_map = InitGameCache("AMAI_CVM.w3v")
 
 //===========================================================================
 // (AMAI)  Job variables
@@ -987,7 +961,6 @@ globals
     string udg_current_category = null
     timer udg_debug_timer = CreateTimer()
 	boolean job_debug = false	// Job system reports will be displayed (used for finding thread crashes)
-	integer debug_player = 1
 
 // Dynamic strategy variables	
 	#INCLUDETABLE <$VER$\Strengths.txt>
@@ -1008,10 +981,10 @@ endglobals
 //============================================================================
 // (AMAI)  Debug Functions
 //============================================================================
-//function H2I takes handle h returns integer
-//  return h
-//  return 0
-//endfunction
+function H2I takes handle h returns integer
+  return h
+  return 0
+endfunction
 
 //function SetHandleHandle takes handle subject, string name, handle value returns nothing
 //    if value==null then
@@ -1063,10 +1036,10 @@ endglobals
 //endfunction
 
 //============================================================================
-//function String2Int takes string s returns integer
-//  return s
-//  return 0
-//endfunction
+function String2Int takes string s returns integer
+  return s
+  return 0
+endfunction
 
 //============================================================================
 function DoNothing takes nothing returns nothing
@@ -1075,16 +1048,16 @@ endfunction
 //============================================================================
 // Properly clear the game caches to make sure they are empty on use
 function InitAMAIGameCache takes nothing returns nothing
-	//call FlushGameCache(InitGameCache("AMAI_TM.w3v"))
-	//call FlushGameCache(InitGameCache("AMAI_AI.w3v"))
-	//call FlushGameCache(InitGameCache("AMAI_Com.w3v"))
-	//call FlushGameCache(InitGameCache("AMAI_Set.w3v"))
-	//call FlushGameCache(InitGameCache("AMAI_CVM.w3v"))
-    //set translation_map = InitHashtable()
-    //set additional_info = InitGameCache("AMAI_AI.w3v")
-    //set com = InitHashtable()
-	//set settings = InitGameCache("AMAI_Set.w3v")
-    //set chat_vars_map = InitHashtable()
+	call FlushGameCache(InitGameCache("AMAI_TM.w3v"))
+	call FlushGameCache(InitGameCache("AMAI_AI.w3v"))
+	call FlushGameCache(InitGameCache("AMAI_Com.w3v"))
+	call FlushGameCache(InitGameCache("AMAI_Set.w3v"))
+	call FlushGameCache(InitGameCache("AMAI_CVM.w3v"))
+    set translation_map = InitGameCache("AMAI_TM.w3v")
+    set additional_info = InitGameCache("AMAI_AI.w3v")
+    set com = InitGameCache("AMAI_Com.w3v")
+	set settings = InitGameCache("AMAI_Set.w3v")
+    set chat_vars_map = InitGameCache("AMAI_CVM.w3v")
 endfunction
 	
 //============================================================================
@@ -1317,7 +1290,7 @@ endfunction
 //============================================================================
 function DumpHandle takes string label, handle h returns nothing
   call StoreString(udg_debug_cache, udg_current_category, "Debug"+Int2Str(udg_unique_counter), label)
-  call StoreString(udg_debug_cache, udg_current_category, "Debug"+Int2Str(udg_unique_counter+1), Int2Str(GetHandleId(h)))
+  call StoreString(udg_debug_cache, udg_current_category, "Debug"+Int2Str(udg_unique_counter+1), Int2Str(H2I(h)))
   set udg_unique_counter = udg_unique_counter + 2
 endfunction
 
@@ -1339,19 +1312,15 @@ endfunction
 //============================================================================
 function AddTrans takes string lang, string key, string value returns nothing
   set translation[translation_length] = value
-  call SaveInteger(translation_map, StringHash(lang), StringHash(key), translation_length)
+  call StoreInteger(translation_map, lang, key, translation_length)
   set translation_length = translation_length + 1
 endfunction
 
 //============================================================================
 function ApplyTrans takes string s returns string
-  //local integer transnum = LoadInteger(translation_map, StringHash(language), StringHash(s))
-  //if transnum != null then
-  if HaveSavedInteger(translation_map, StringHash(language), StringHash(s)) then
-    //return translation[transnum]
-	return translation[LoadInteger(translation_map, StringHash(language), StringHash(s))]
+  if HaveStoredInteger(translation_map, language, s) then
+    return translation[GetStoredInteger(translation_map, language, s)]
   else
-    //call DisplayTimedTextToPlayer(Player(0),0,0,15,message_add+s+":handle not saved")
     return s
   endif
 endfunction
@@ -1476,29 +1445,15 @@ endfunction
 //	return message  // So still works if you use wrong Trace function
 //endfunction
 
-//============================================================================
-// Only displays messages originating from a particular ai player 
-//============================================================================
-function DisplayToAllFromPlayer takes string s, integer playernum, boolean important returns nothing
-	local integer i = 0
-	if Player(GetAiPlayer()) == Player(playernum) then
+function Trace takes string s returns nothing
+    local integer i = 0
+	if debugging and Player(GetAiPlayer()) == Player(2) then
 		loop
 			call DisplayTimedTextToPlayer(Player(i),0,0,15,message_add+s)
 			set i = i + 1
 			exitwhen i == 12
 		endloop
-		if important then
-			call StartSound(importantSound)
-		else
-			call StartSound(chatSound)
-		endif
-	endif
-endfunction
-
-//============================================================================
-function Trace takes string s returns nothing
-	if debugging then
-		call DisplayToAllFromPlayer(s, debug_player, false)
+		call StartSound(chatSound)
 	endif	
 	// Blizzard ai part
     if trace_on then
@@ -1508,9 +1463,6 @@ endfunction
 
 //============================================================================
 function TraceI takes string s, integer val returns nothing	
-	if debugging then
-		call DisplayToAllFromPlayer(s+":"+Int2Str(val), debug_player, false)
-	endif
     if trace_on then
         call DisplayTextI(GetAiPlayer(),s,val)
     endif
@@ -1518,9 +1470,6 @@ endfunction
 
 //============================================================================
 function TraceII takes string message, integer v1, integer v2 returns nothing
-	if debugging then
-		call DisplayToAllFromPlayer(message+":"+Int2Str(v1)+":"+Int2Str(v2), debug_player, false)
-	endif
     if trace_on then
         call DisplayTextII(GetAiPlayer(),message,v1,v2)
     endif
@@ -1528,9 +1477,6 @@ endfunction
 
 //============================================================================
 function TraceIII takes string message, integer v1, integer v2, integer v3 returns nothing
-	if debugging then
-		call DisplayToAllFromPlayer(message+":"+Int2Str(v1)+":"+Int2Str(v2)+":"+Int2Str(v3), debug_player, false)
-	endif
     if trace_on then
         call DisplayTextIII(GetAiPlayer(),message,v1,v2,v3)
     endif
@@ -1541,8 +1487,14 @@ endfunction
 //  replays where the job system crashes to display when jobs run
 //============================================================================
 function DisplayToAllJobDebug takes string s returns nothing
-  if job_debug then
-	call DisplayToAllFromPlayer(s, debug_player, false)
+  local integer i = 0
+  if job_debug and ai_player == Player(2) then
+    loop
+        call DisplayTimedTextToPlayer(Player(i),0,0,15,message_add+s)
+        set i = i + 1
+        exitwhen i == 12
+    endloop
+    call StartSound(chatSound)
   endif
 endfunction
 
@@ -1706,57 +1658,19 @@ endfunction
 // (AMAI)	CharTable Functions
 //============================================================================
 function LookupCT takes string s returns string
-  //local integer i = StringHash(s)
-  local integer i = 0
-  local string storedstring = ""
-  //if (i >= JASS_MAX_ARRAY_SIZE) then
-  // 	set i = i - (i/(JASS_MAX_ARRAY_SIZE-1) - 1) * JASS_MAX_ARRAY_SIZE
-	//set i = i - (i/JASS_MAX_ARRAY_SIZE)*JASS_MAX_ARRAY_SIZE
-  //endif
-  
-  loop
-	exitwhen i >= char_table_length
-	if (s == char_bug_table[i]) then
-		//call DisplayTimedTextToPlayer(Player(0),0,0,15,message_add+"1:Char Match:" + s + " With stored char:" + char_table[i])
-		return char_table[i]
-	endif
-	set i = i + 1
-  endloop
-  
-  return ""
-  // set storedstring = LoadStr(language_table, CHAR_TABLE, StringHash(s))
-  // if (storedstring == null) then
-	// return ""
-  // else
-    // //call DisplayTimedTextToPlayer(Player(0),0,0,15,message_add+"2:Char match:" + s + " With stored char:" + storedstring)
-	// return storedstring
-  // endif
+  local integer i = String2Int(s)
+  return char_table[i - (i/JASS_MAX_ARRAY_SIZE)*JASS_MAX_ARRAY_SIZE]
 endfunction
 
 //============================================================================
 function AddToCT takes string s returns nothing
-  local string firstchar = SubString(s,0,1)		// Substring dosn't work in AMAI and returns strange values (but is the same value so we do a comparison of the substring value then return the actual character
-  local integer i = 0
-  if (firstchar == null) then
-	set firstchar = ""
-  endif
-  set i = StringHash(firstchar)
-  //if (i >= JASS_MAX_ARRAY_SIZE) then
-	//set i = i - (i/(JASS_MAX_ARRAY_SIZE-1) - 1) * JASS_MAX_ARRAY_SIZE
-	//set i = i - (i/JASS_MAX_ARRAY_SIZE)*JASS_MAX_ARRAY_SIZE
-  //endif
-  
-  set char_bug_table[char_table_length] = firstchar
-  set char_table[char_table_length] = s
-  set char_table_length = char_table_length + 1
-  call SaveStr(language_table, CHAR_TABLE, i, s)
-    //call DisplayTimedTextToPlayer(Player(0),0,0,15,message_add+s+" Hash:"+Int2Str(i)+": Returned:"+LoadStr(language_table, CHAR_TABLE, i))
+  local integer i = String2Int(SubString(s, 0, 1))
+  set char_table[i - (i/JASS_MAX_ARRAY_SIZE)*JASS_MAX_ARRAY_SIZE] = s
 endfunction
 
 //============================================================================
 function GetChar takes string s, integer num returns string
-  local string linechar = SubString(s, num, num + 1)
-  return LookupCT(linechar)
+  return LookupCT(SubString(s, num, num + 1))
 endfunction
 
 //============================================================================
@@ -1768,56 +1682,44 @@ function InitCT takes nothing returns nothing
   call AddToCT("#")
   call AddToCT("\"") 
   call AddToCT("\\")
-  //call AddToCT("{")
-  //call AddToCT("}")
 endfunction
 
 //"============================================================================
 function SetChatVar takes string key, string value returns nothing
-  local integer i = 0 
-  //if i == 0 then
-  if (HaveSavedInteger(language_table, CHAT_VARS_TABLE, StringHash(key)) == false) then
+  local integer i = GetStoredInteger(chat_vars_map, ai_id, key)
+  if i == 0 then
     set i = chat_vars_length
     set chat_vars_length = chat_vars_length + 1
-    //call StoreInteger(chat_vars_map, ai_id, key, i)
-	call SaveInteger(language_table, CHAT_VARS_TABLE, StringHash(key), i)
-  else
-    set i = LoadInteger(language_table, CHAT_VARS_TABLE, StringHash(key))
+    call StoreInteger(chat_vars_map, ai_id, key, i)
   endif
   set chat_vars[i] = value
 endfunction
 
 //============================================================================
 function GetChatVar takes string key returns string
-  //return chat_vars[GetStoredInteger(chat_vars_map, ai_id, key)]
-  return chat_vars[LoadInteger(language_table, CHAT_VARS_TABLE, StringHash(key))]
+  return chat_vars[GetStoredInteger(chat_vars_map, ai_id, key)]
 endfunction
 
 //============================================================================
 function SetChatVarB takes string key, boolean value returns nothing
-  //call StoreBoolean(chat_vars_map, ai_id, key, value)
-  call SaveBoolean(language_table, CHAT_VARS_TABLE, StringHash(key+"B"), value)
+  call StoreBoolean(chat_vars_map, ai_id, key, value)
 endfunction
 
 //============================================================================
 function GetChatVarB takes string key returns boolean
-  //return GetStoredBoolean(chat_vars_map, ai_id, key)
-  return LoadBoolean(language_table, CHAT_VARS_TABLE, StringHash(key+"B"))
+  return GetStoredBoolean(chat_vars_map, ai_id, key)
 endfunction
 
 //============================================================================
 function SetChatVarR takes string key, real value returns nothing
-  call SaveReal(language_table, CHAT_VARS_TABLE, StringHash(key+"R"), value)
+  call StoreReal(chat_vars_map, ai_id, key, value)
 endfunction
 
 //============================================================================
 function GetChatVarR takes string key returns real
-  //return GetStoredReal(chat_vars_map, ai_id, key)
-  return LoadReal(language_table, CHAT_VARS_TABLE, StringHash(key+"R"))
+  return GetStoredReal(chat_vars_map, ai_id, key)
 endfunction
 
-//============================================================================
-// Converts translational parts of text to actual text
 //============================================================================
 function ApplyChatVars takes string s_in returns string
   local string s = ""
@@ -1877,117 +1779,6 @@ function CompareReal takes real x, real y, integer compare returns boolean
 endfunction
 
 //============================================================================
-// Determines if the chat statement conditions are true
-//============================================================================
-// function CheckChatCondition takes string s returns boolean
-  // local integer i = 1
-  // local boolean is_compare = false
-  // local integer compare = 0
-  // local string key = ""
-  // local string value = ""
-  // local string c = ""
-  // local boolean part_cond = true
-  // local boolean not_cond = false
-  // local boolean return_bool = false
-  // local boolean exitloop = false
-  
-  // set chat_eq = COMPARE_TRUE
-  // set c = GetChar(s, 0)
-  // if c != "{" then
-    // set return_bool = true
-	 // // call DisplayTimedTextToPlayer(Player(0),0,0,15,message_add+B2S(return_bool)+":"+c)
-	// //return true
-  // else
-  // loop
-    // exitwhen (exitloop == true)
-    // set c = GetChar(s, i)
-    // if c == "}" then
-      // if is_compare then
-        // if key == "PlayerRace" then
-          // set chat_race = value
-          // set chat_eq = compare
-		  // set return_bool = true
-		  // set exitloop = true
-          // //return true
-        // elseif compare == COMPARE_EQ then
-		  // set return_bool = (GetChatVar(key) == value)
-		  // set exitloop = true
-          // //return GetChatVar(key) == value
-        // elseif compare == COMPARE_UNEQ then
-		  // set return_bool = (GetChatVar(key) != value)
-		  // set exitloop = true
-          // //return GetChatVar(key) != value
-        // else
-		  // set return_bool = CompareReal(GetChatVarR(key), S2R(value), compare)
-		  // set exitloop = true
-          // //return CompareReal(GetChatVarR(key), S2R(value), compare)
-        // endif
-      // else
-	    // set return_bool = (not_cond != GetChatVarB(key))
-		// set exitloop = true
-        // //return not_cond != GetChatVarB(key)
-      // endif
-    // elseif c == "," then
-      // if is_compare then
-        // if key == "PlayerRace" then
-          // set chat_race = value
-          // set chat_eq = compare
-        // elseif compare == COMPARE_EQ then
-          // set part_cond = (GetChatVar(key) == value)
-        // elseif compare == COMPARE_UNEQ then
-          // set part_cond = (GetChatVar(key) != value)
-        // else
-          // set part_cond = CompareReal(GetChatVarR(key), S2R(value), compare)
-        // endif
-      // else
-        // set part_cond = (not_cond != GetChatVarB(key))
-      // endif
-      // if not part_cond then
-		// set return_bool = false
-		// set exitloop = true
-        // //return false
-      // else
-      // set is_compare = false
-      // set not_cond = false
-      // set key = ""
-      // set value = ""
-      // set compare = 0
-	  // endif
-    // elseif c == "=" then
-      // if is_compare then
-        // if compare == COMPARE_GREATER then
-          // set compare = COMPARE_GREATER_EQ
-        // elseif compare == COMPARE_LESS then
-          // set compare = COMPARE_LESS_EQ
-        // endif
-      // else
-        // set is_compare = true
-        // if not_cond then
-          // set compare = COMPARE_UNEQ
-        // else
-          // set compare = COMPARE_EQ
-        // endif
-      // endif
-    // elseif c == "<" then
-      // set is_compare = true
-      // set compare = COMPARE_LESS
-    // elseif c == ">" then
-      // set is_compare = true
-      // set compare = COMPARE_GREATER
-    // elseif c == "!" then
-      // set not_cond = true
-    // elseif is_compare then
-      // set value = value + c
-    // else
-      // set key = key + c
-    // endif
-    // set i = i + 1
-  // endloop
-  // endif
-  // //call DisplayTimedTextToPlayer(Player(0),0,0,15,message_add+B2S(return_bool)+":"+key)
-  // return return_bool
-// endfunction
-
 function CheckChatCondition takes string s returns boolean
   local integer i = 1
   local boolean is_compare = false
@@ -2464,12 +2255,12 @@ endfunction
 
 //============================================================================
 function IsProfileUsed takes integer profile returns boolean
-  return LoadBoolean(com, PROFILE_USED, profile)
+  return GetStoredBoolean(com, "ProfileUsed", Int2Str(profile))
 endfunction
 
 //============================================================================
 function SetProfileUsed takes integer profile returns nothing
-  call SaveBoolean(com, PROFILE_USED, profile, true)
+  call StoreBoolean(com, "ProfileUsed", Int2Str(profile), true)
 endfunction
 
 //============================================================================
@@ -2550,7 +2341,7 @@ function AddFavoriteUnitRP takes nothing returns nothing
     set i = 0
     loop
       exitwhen i >= 4
-      set strategy_type_used[i] = LoadBoolean(com, TEAM_STATEGY_INUSE, i)
+      set strategy_type_used[i] = GetStoredBoolean(com, team, Int2Str(i))
       set i = i + 1
     endloop
     set i = 0
@@ -2685,10 +2476,10 @@ endfunction
 //============================================================================
 function AddTranslation takes string lang, string strat_name, string trans_name, string trans_report returns nothing
   set translation[translation_length] = trans_name
-  call SaveInteger(translation_map, StringHash(lang), StringHash("Name"+strat_name), translation_length)
+  call StoreInteger(translation_map, lang, "Name"+strat_name, translation_length)
   set translation_length = translation_length + 1
   set translation[translation_length] = trans_report
-  call SaveInteger(translation_map, StringHash(lang), StringHash("Report"+strat_name), translation_length)
+  call StoreInteger(translation_map, lang, "Report"+strat_name, translation_length)
   set translation_length = translation_length + 1
 endfunction
 
@@ -2705,8 +2496,8 @@ endfunction
 
 //============================================================================
 function GetStrategyName takes integer stratnum returns string
-  if HaveSavedInteger(translation_map, StringHash(language), StringHash("Name"+strategy_name[stratnum])) then
-    return translation[LoadInteger(translation_map, StringHash(language), StringHash("Name"+strategy_name[stratnum]))]
+  if HaveStoredInteger(translation_map, language, "Name"+strategy_name[stratnum]) then
+    return translation[GetStoredInteger(translation_map, language, "Name"+strategy_name[stratnum])]
   else
     return strategy_default_name[stratnum]
   endif
@@ -2714,8 +2505,8 @@ endfunction
 
 //============================================================================
 function GetStrategyReport takes integer stratnum returns string
-  if HaveSavedInteger(translation_map, StringHash(language), StringHash("Report"+strategy_name[stratnum])) then
-    return translation[LoadInteger(translation_map, StringHash(language), StringHash("Report"+strategy_name[stratnum]))]
+  if HaveStoredInteger(translation_map, language, "Report"+strategy_name[stratnum]) then
+    return translation[GetStoredInteger(translation_map, language, "Report"+strategy_name[stratnum])]
   else
     return strategy_default_report[stratnum]
   endif
@@ -3274,7 +3065,7 @@ function SelectByAlive2 takes group g, boolean is_alive returns group
      loop
        set u = FirstOfGroup(g)
        exitwhen u == null
-       if (GetUnitState(u, UNIT_STATE_LIFE) > 0) == is_alive then
+       if GetUnitState(u, UNIT_STATE_LIFE) > 0 == is_alive then
 	   //if not IsUnitType(u, UNIT_TYPE_DEAD) == is_alive then
           call GroupAddUnit(rg, u ) 
        endif
@@ -3291,7 +3082,7 @@ function SelectByFullHealth takes group g, boolean is_healed returns group
      loop
        set u = FirstOfGroup(g)
        exitwhen u == null
-       if (GetUnitState(u, UNIT_STATE_LIFE) >= GetUnitState(u, UNIT_STATE_MAX_LIFE)) == is_healed or IsUnitType(u, UNIT_TYPE_HERO) then
+       if GetUnitState(u, UNIT_STATE_LIFE) >= GetUnitState(u, UNIT_STATE_MAX_LIFE) == is_healed or IsUnitType(u, UNIT_TYPE_HERO) then
 	   //if not IsUnitType(u, UNIT_TYPE_DEAD) == is_alive then
           call GroupAddUnit(rg, u ) 
        endif
@@ -3699,97 +3490,6 @@ endfunction
 //==========================================================================
 // (AMAI Addition by SM) Get Nearest Neutral	
 //==========================================================================
-// function CanPathToLoc takes location locA, location target, pathingtype path returns real 
-
-// // This function returns the time to path to a location. If positive its pathable, if negative
-// // its unpathable.
-
-    // local integer groundid = 'ewsp'
-    // local integer seaid = 'hdes'
-    // local integer amphibiousid = 'nsnp'
-    // local integer flyid = 'hgyr'
-    // local unit u = null
-    // local real distance = 0
-    // local location l = null
-    // local real checktime = 0
-    // local real totaltime = 0
-	// local boolean exitloop = false
-	// local location prev_loc = null
-	// local integer checks = 0	// Number of times unit has stayed at same position
-    
-    // if path == PATHING_TYPE_WALKABILITY then
-        // set u = CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), groundid, GetLocationX(locA), GetLocationY(locA), 270.00)
-    // elseif path == PATHING_TYPE_FLOATABILITY then
-        // set u = CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), seaid, GetLocationX(locA), GetLocationY(locA), 270.00)
-    // elseif path == PATHING_TYPE_AMPHIBIOUSPATHING then
-        // set u = CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), amphibiousid, GetLocationX(locA), GetLocationY(locA), 270.00)
-    // elseif path == PATHING_TYPE_FLYABILITY then
-        // set u = CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), flyid, GetLocationX(locA), GetLocationY(locA), 270.00)
-    // else
-        // set totaltime = -1
-    // endif
-
-	// if totaltime == 0 then
-	    // call SetUnitInvulnerable(u, true)
-        // call ShowUnit(u, false)
-        // call SetUnitUseFood(u, false)
-        // call SetUnitMoveSpeed(u, 520)
-        // call RemoveGuardPosition(u)
-        // call IssuePointOrder(u, "move", GetLocationX(target), GetLocationY(target))
-
-    // set checktime =  GetTimeToReachLoc(u, target)
-    // set totaltime = checktime
-    // //call UnitApplyTimedLife(u, 'BTLF', checktime * 5)
-    // //call Sleep(checktime)
-    // set checktime = 2.00
-    
-    // loop
-		// exitwhen (exitloop == true)
-		// //	call DisplayTextToPlayer(GetLocalPlayer(), 0, 0, "pathing loop")
-        // set l = Location(GetUnitX(u), GetUnitY(u))
-        // set distance = DistanceBetweenPoints(l,target)
-        // if distance <= buy_distance then
-		// //	call DisplayTextToPlayer(GetLocalPlayer(), 0, 0, "Tavern is pathable")
-			// call CreateDebugTag("Target Destination is pathable", 10, u, 3.00, 1.50)
-			// call RemoveUnit(u)
-			// set u = null
-			// set exitloop = true
-            // //return totaltime
-		// //elseif GetUnitCurrentOrder(u) == OrderId("stop") then
-            // //return (totaltime * -1)
-        // elseif GetUnitState(u, UNIT_STATE_LIFE) <= 0 then
-			// call RemoveUnit(u)
-			// set u = null		
-			// set exitloop = true
-			// set totaltime = totaltime * -1
-            // //return (totaltime * -1)
-        // elseif GetUnitCurrentOrder(u) == OrderId("stop") or GetUnitCurrentOrder(u) != OrderId("move") then
-			// set checks = checks + 1
-			// call CreateDebugTag("Invisible Path unit has stopped", 10, u, 3.00, 1.50)
-			// if checks > 1 then
-				// call CreateDebugTag("Target Destination was not reached", 10, u, 3.00, 1.50)
-				// call RemoveUnit(u)
-				// set u = null	
-				// set exitloop = true
-				// set totaltime = totaltime * -1
-				// //return (totaltime * -1)
-			// endif
-		// else
-			// set checks = 0	// means unit is moving and not standing still
-			// call CreateDebugTag("Invisible Path Unit Here", 10, u, 3.00, 1.50)	
-        // endif
-		// call RemoveLocation(l)
-		// set l = null
-        // set totaltime = totaltime + checktime	
-        // call Sleep(checktime)
-        
-    // endloop
-	// endif
-    
-    // return (totaltime)
-    
-// endfunction
-
 function CanPathToLoc takes location locA, location target, pathingtype path returns real 
 
 // This function returns the time to path to a location. If positive its pathable, if negative
@@ -3816,7 +3516,7 @@ function CanPathToLoc takes location locA, location target, pathingtype path ret
     elseif path == PATHING_TYPE_FLYABILITY then
         set u = CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), flyid, GetLocationX(locA), GetLocationY(locA), 270.00)
     else
-        return -1
+        return false
     endif
 
 	    call SetUnitInvulnerable(u, true)
@@ -5082,7 +4782,6 @@ function GetLocationInDistanceFromLoc takes location loc, real dist returns loca
     local unit u = null
     local location l = null
     local real checktime = 0
-	local boolean exitloop = false
 
     set u = CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), groundid, GetLocationX(loc),GetLocationY(loc), 270.00)
     call ShowUnit(u, false)
@@ -5095,25 +4794,24 @@ function GetLocationInDistanceFromLoc takes location loc, real dist returns loca
     call Sleep(0.3)
 
     loop
-	   exitwhen (exitloop == true)
 	   set l = GetUnitLoc(u)
 	   set distance = DistanceBetweenPoints(l, loc)
 	   if distance >= dist then
  //          call DisplayToAll("loc found")
-			set exitloop = true
-	        //return l
+//           call PingMinimap(GetLocationX(l), GetLocationY(l), 20)
+	        return l
 	   elseif GetUnitState(u, UNIT_STATE_LIFE) <= 0 then
             call RemoveLocation(l)
             set l = null
-			set exitloop = true
-	      //return null
+//             call DisplayToAll("loc not found")
+	      return null
 	   else
             call RemoveLocation(l)
             set l = null		
 	   endif
 	   call Sleep(0.3)
     endloop
-    return l
+    return null
 endfunction
 
 
@@ -5159,18 +4857,18 @@ endfunction
 
 //============================================================================
 function GetBuildLocationInDistanceFromLoc_d takes integer id, location loc, real distance returns location
-	local location buildloc = GetLocationInDistanceFromLoc(loc, distance)
+	local location build_loc = GetLocationInDistanceFromLoc(loc, distance)
  	local unit u = null
 
-	if buildloc != null then
-		set u = CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), id, GetLocationX(buildloc), GetLocationY(buildloc), 270.0)
-		call RemoveLocation(buildloc)
-		set buildloc = GetUnitLoc(u)
+	if build_loc != null then
+		set u = CreateUnit(Player(PLAYER_NEUTRAL_PASSIVE), id, GetLocationX(build_loc), GetLocationY(build_loc), 270.0)
+		call RemoveLocation(build_loc)
+		set build_loc = GetUnitLoc(u)
 		call RemoveUnit(u)
 		set u = null
 		call RemoveLocation(loc)
 		set loc = null
-		return buildloc
+		return build_loc
 	else
 		call RemoveLocation(loc)
 		set loc = null
@@ -5207,16 +4905,16 @@ function GetLumberLocationAtBase takes nothing returns location
 endfunction
 
 function BuildLumberMillAtBase takes nothing returns boolean
-	local location buildloc = GetLumberLocationAtBase()
+	local location build_loc = GetLumberLocationAtBase()
 	local unit u = null
 	local unit peon = GetExpansionPeon()
-	if buildloc != null then
-		set u = CreateUnitAtLoc(Player(PLAYER_NEUTRAL_PASSIVE), old_id[racial_lumber], buildloc, 270.0)
-		call RemoveLocation(buildloc)
-		set buildloc = GetUnitLoc(u)
+	if build_loc != null then
+		set u = CreateUnitAtLoc(Player(PLAYER_NEUTRAL_PASSIVE), old_id[racial_lumber], build_loc, 270.0)
+		call RemoveLocation(build_loc)
+		set build_loc = GetUnitLoc(u)
 		call RemoveUnit(u)
 		set u = null
-		return IssuePointOrderByIdLoc(peon, old_id[racial_lumber], buildloc)
+		return IssuePointOrderByIdLoc(peon, old_id[racial_lumber], build_loc)
 	endif
 	return false
 endfunction
@@ -5899,7 +5597,7 @@ function SetAIArray takes nothing returns nothing
   local integer i = 0
   loop
     exitwhen i >= 12
-    if GetPlayerSlotState(Player(i)) == PLAYER_SLOT_STATE_PLAYING and GetPlayerController(Player(i)) == MAP_CONTROL_COMPUTER and LoadBoolean(com, IS_AMAI, i) then
+    if GetPlayerSlotState(Player(i)) == PLAYER_SLOT_STATE_PLAYING and GetPlayerController(Player(i)) == MAP_CONTROL_COMPUTER and GetStoredBoolean(com, "IsAMAI", Int2Str(i)) then
       set ai_force[ai_force_length] = i
       set ai_force_length = ai_force_length + 1
     endif
@@ -7360,8 +7058,8 @@ function InitSpecialRaces takes nothing returns nothing
   loop
     exitwhen i >= 12
     set s = Int2Str(i)
-    set player_race[i] = LoadInteger(com, RACE, i)
-    set player_race_pref[i] = LoadInteger(com, RACE_PREF, i)
+    set player_race[i] = GetStoredInteger(com, "Race", s)
+    set player_race_pref[i] = GetStoredInteger(com, "RacePref", s)
     set i = i + 1
   endloop
 endfunction
@@ -7408,7 +7106,7 @@ endfunction
 
 //===========================================================================
 function InitRaces takes nothing returns nothing
-  if LoadBoolean(com, USE_SPECIAL_RACES, StringHash("Special")) then
+  if GetStoredBoolean(com, "Races", "Special") then
     call InitSpecialRaces()
   else
     call InitStandardRaces()
@@ -7438,7 +7136,7 @@ function InitAMAI takes nothing returns nothing
     endif
     call InitDigits()
     set ai_id = Int2Str(GetAiPlayer())
-    call SaveBoolean(com, IS_AMAI, GetAiPlayer(), true)	
+    call StoreBoolean(com, "IsAMAI", ai_id, true)	
     call InitRaces()
     if IsGameFFA() then
       set game_is_ffa = true
@@ -7489,7 +7187,7 @@ function AMAI takes code heroes, code peons, code attacks returns nothing
     local boolean isNewbie = (MeleeDifficulty() == EASY)
 
 //    call sendToNextAI()
-    call SaveBoolean(com, TEAM_STATEGY_INUSE, strategy_type[chosen_strategy], true)
+    call StoreBoolean(com, "Team"+Int2Str(GetPlayerTeam(ai_player))+"StratUsed", Int2Str(strategy_type[chosen_strategy]), true)
     set last_strategy = strategy
 
     call SetMeleeAI()
@@ -8663,7 +8361,7 @@ function AddHarass takes integer groupnum, integer qty, integer unitid returns n
   set harass_size[groupnum] = harass_size[groupnum] + 1
 endfunction
 
-function AddHarassUnittype takes integer groupnum, integer harassnum, group harasser, integer key returns group
+function AddHarassUnittype takes integer groupnum, integer harassnum, group harasser, string key returns group
   local group g = CreateGroup()
   local unit u = null
   local real player_sum = 0
@@ -8684,29 +8382,29 @@ function AddHarassUnittype takes integer groupnum, integer harassnum, group hara
   endloop
   call DestroyGroup(g)
   set g = null
-  call SaveReal(additional_info, key, START_STRENGTH, player_sum)
+  call StoreReal(additional_info, key, "Start_Strength", player_sum)
   return harasser
 endfunction
 
 function StartHarass takes integer groupnum, integer harass_target, boolean avoid_towers, real strength_limit, real flee_percent, integer flee_number, real lx, real ly returns nothing
   local integer i = 0
   local group harasser = CreateGroup()
-  local integer key = GetHandleId(harasser)
+  local string key = Int2Str(H2I(harasser))
   loop
     exitwhen i >= harass_size[groupnum]
     set harasser = AddHarassUnittype(groupnum, i, harasser, key)
     set i = i + 1
   endloop
   set harass_time[groupnum] = ai_time
-  call SaveBoolean(additional_info, key, AVOID_TOWERS, avoid_towers)
+  call StoreBoolean(additional_info, key, "Avoid_Towers", avoid_towers)
   //if avoid_towers and GetLocationTowerStrength(GetUnitX(target), GetUnitY(target), ver_tower_check_radius) > 0
-  call SaveReal(additional_info, key, STRENGTH_LIMIT, strength_limit)
-  call SaveBoolean(additional_info, key, STATE_ATTACKING, true)
-  call SaveReal(additional_info, key, FLEE_PERCENT, flee_percent)
-  call SaveInteger(additional_info, key, FLEE_NUMBER, flee_number)
-  call SaveInteger(additional_info, key, INVISIBLE_COUNT, 0)
-  call SaveReal(additional_info, key, LOCX, lx)
-  call SaveReal(additional_info, key, LOCY, ly)
+  call StoreReal(additional_info, key, "Strength_Limit", strength_limit)
+  call StoreBoolean(additional_info, key, "State_Attacking", true)
+  call StoreReal(additional_info, key, "Flee_Percent", flee_percent)
+  call StoreInteger(additional_info, key, "Flee_Number", flee_number)
+  call StoreInteger(additional_info, key, "Invisible_Count", 0)
+  call StoreReal(additional_info, key, "LocationX", lx)
+  call StoreReal(additional_info, key, "LocationY", ly)
   call TQAddGroupJob(0, HARASS, harass_target, null, harasser)
 endfunction
 
@@ -9281,11 +8979,7 @@ function StartUnitAM takes integer ask_qty, integer unitid, integer town, intege
     endif
 	
 	if unitid == racial_lumber and TownCountDone(racial_lumber) < 1 then
-		if BuildLumberMillAtBase() then
-			return BUILT_SOME
-		else
-			return CANNOT_BUILD
-		endif
+		return BuildLumberMillAtBase()
 	endif
 	
     if bloc != BLOC_STD then
@@ -10478,7 +10172,7 @@ endfunction
 //============================================================================
 function GetIntervalCreep takes integer lower, integer upper, integer str, integer anti_air_strength, boolean allow_air, integer sd returns unit
     local unit creep = null
-    local integer creepstrength = 0
+    local integer creep_strength = 0
     local integer middle = (lower + upper) / 2
 
     if sd < 0 then
@@ -10488,12 +10182,12 @@ function GetIntervalCreep takes integer lower, integer upper, integer str, integ
     if creep == null then
         return GetIntervalCreep(middle, upper, str, anti_air_strength, allow_air, sd - 1)
     else
-      set creepstrength = GetCreepCampStrength(creep) + 1
+      set creep_strength = GetCreepCampStrength(creep) + 1
       if balancing then
-        //call Trace("Creep strength: " + Int2Str(creepstrength))
+        //call Trace("Creep strength: " + Int2Str(creep_strength))
         call PingMinimap(GetUnitX(creep), GetUnitY(creep), 1)
       endif
-      if creepstrength < str then
+      if creep_strength < str then
         if air_strength <= anti_air_strength then
           return creep
         else
@@ -10509,7 +10203,7 @@ endfunction
 function GetFittingCreep takes integer str returns unit
     local integer anti_air_strength = R2I(GetPlayerAntiAirStrength(ai_player))
     local unit creep = null
-    local integer creepstrength = 0
+    local integer creep_strength = 0
     local boolean allow_air = false      //anti_air_strength > 25
     local integer lvl = str
     
@@ -10522,11 +10216,11 @@ function GetFittingCreep takes integer str returns unit
 
 	//call Trace("Our strength: " + Int2Str(str))
 	
-    set creepstrength = GetCreepCampStrength(creep)
-    if creepstrength < str and air_strength <= anti_air_strength then
+    set creep_strength = GetCreepCampStrength(creep)
+    if creep_strength < str and air_strength <= anti_air_strength then
     	//call Trace("Creep match")
-		call Trace("Creeping strength: " + Int2Str(creepstrength))		
-      set air_strength = creepstrength
+		call Trace("Creeping strength: " + Int2Str(creep_strength))		
+      set air_strength = creep_strength
 	return creep
     else
       //call Trace("No Creep ")
@@ -10538,7 +10232,7 @@ function GetFittingCreep takes integer str returns unit
 //    set creep = GetCreepCamp(1, camp_last_checked, allow_air)
 
 //    if balancing then
-//      call DisplayToAll("Creep strength: " + Int2Str(creepstrength))
+//      call DisplayToAll("Creep strength: " + Int2Str(creep_strength))
 //      call PingMinimap(GetUnitX(creep), GetUnitY(creep), 1)
 //    endif
 

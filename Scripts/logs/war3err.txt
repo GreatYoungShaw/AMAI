@@ -2,63 +2,63 @@ symtable offset: 2854
 War3_497: 4400e0
 SMemAlloc: 15027db0
 SStrHashHT: 1503bfa0
-NativeStrGet: 6f2b0b50
-strget: 6f6a2020
-getnativestruct: 6f6a2050
-jString_of_char: 6f6b1cc0
-nstr_of_jString: 6f6b1ca0
-OpLimit signature found at: 6f6b861d
-8e0c036 8e0c030
-DivZero signature found at: 6f6b8689
-VarUse signature found at: 6f6b8644
-Op signature found at: 6f6b7705
+NativeStrGet: 1050b50
+strget: 1442020
+getnativestruct: 1442050
+jString_of_char: 1451cc0
+nstr_of_jString: 1451ca0
+OpLimit signature found at: 145861d
+97fc036 97fc030
+DivZero signature found at: 1458689
+VarUse signature found at: 1458644
+Op signature found at: 1457705
 nativename: Player
-hooknative: 8e01b00
+hooknative: 97f1b00
 hooknativedata: 53e58955
-nativenameaddr: 6f818a8c
-regaddr: 6f2ae0ee
-war3_native: 6f2cffc0
+nativenameaddr: 15b8a8c
+regaddr: 104e0ee
+war3_native: 106ffc0
 
 nativename: CreateGroup
-hooknative: 8e03c40
+hooknative: 97f3c40
 hooknativedata: 53e58955
-nativenameaddr: 6f81aa98
-regaddr: 6f2ac97e
-war3_native: 6f2bc990
+nativenameaddr: 15baa98
+regaddr: 104c97e
+war3_native: 105c990
 
 nativename: DestroyGroup
-hooknative: 8e0aa40
+hooknative: 97faa40
 hooknativedata: 81e58955
-nativenameaddr: 6f81aa7c
-regaddr: 6f2ac992
-war3_native: 6f2bca40
+nativenameaddr: 15baa7c
+regaddr: 104c992
+war3_native: 105ca40
 
-Location: 6f2b0db7
+Location: 1050db7
 nativename: RemoveLocation
-hooknative: 8e0ac50
+hooknative: 97fac50
 hooknativedata: 81e58955
-nativenameaddr: 6f81c004
-regaddr: 6f2ababa
-war3_native: 6f2b0dc0
+nativenameaddr: 15bc004
+regaddr: 104baba
+war3_native: 1050dc0
 
 nativename: ExecuteFunc
-hooknative: 8e01770
+hooknative: 97f1770
 hooknativedata: 83e58955
-nativenameaddr: 6f815638
-regaddr: 6f2b0376
-war3_native: 6f2e22a0
+nativenameaddr: 15b5638
+regaddr: 1050376
+war3_native: 10822a0
 
 nativename: Cheat
-hooknative: 8e018a0
+hooknative: 97f18a0
 hooknativedata: 83e58955
-nativenameaddr: 6f815630
-regaddr: 6f2b038a
-war3_native: 6f2d78f0
+nativenameaddr: 15b5630
+regaddr: 105038a
+war3_native: 10778f0
 
-jGetVar relative jump: 6f6b7837
-jGetVar: 6f6b88b0
-jAssignVar: 6f6b3f40
+jGetVar relative jump: 1457837
+jGetVar: 14588b0
+jAssignVar: 1453f40
 Installing no pause
-Pause patch signature found at: 6f0f5799
+Pause patch signature found at: e95799
 Enabling backtrace on error
 game.dll patched successfully

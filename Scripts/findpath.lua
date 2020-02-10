@@ -1,5 +1,5 @@
-print "AMAI 2.54"
-print "Powered by Grimoire 1.5 2/21/2008 (1.24b err support)"
+print "AMAI 2.53"
+print "Powered by Grimoire 1.5 2/21/2008"
 
 grimregpath = "Software\\Grimoire"
 key = "HKEY_CURRENT_USER\\Software\\Blizzard Entertainment\\Warcraft III"

@@ -20,7 +20,7 @@
     
 #ELSE
 
-function TeleportHome takes integer hn returns nothing
+function TeleportHome takes unit u returns nothing
 // Team Game improvements Added by Strategy Master 12/03/05
   local integer i = 0
   local player p = null
@@ -30,9 +30,9 @@ function TeleportHome takes integer hn returns nothing
   local real dy = 0
   local real actual_diff = 0 
   local location start_loc = null
- 
+  local location hero_loc = null
 
-  //set hero_loc = GetUnitLoc(hero_unit[hn])
+  set hero_loc = GetUnitLoc(u)
   set break_attack = attack_running
   set attack_running = false
   call ClearCaptainTargets()	
@@ -46,7 +46,7 @@ function TeleportHome takes integer hn returns nothing
 	      //set dx = GetLocationX(start_loc) - GetLocationX(hero_loc)
 	      //set dy = GetLocationY(start_loc) - GetLocationY(hero_loc)
 	      //set actual_diff = SquareRoot(dx * dx + dy * dy)
-		  set actual_diff = DistanceBetweenPoints(start_loc, hero_loc[hn])
+		  set actual_diff = DistanceBetweenPoints(start_loc, hero_loc)
 	      if IsPlayerAlly(ai_player, p) and actual_diff < distance and GetPlayerSlotState(p) == PLAYER_SLOT_STATE_PLAYING then
 			set distance = actual_diff
 			if teleport_loc != null then
@@ -59,19 +59,19 @@ function TeleportHome takes integer hn returns nothing
 			call RemoveLocation( start_loc )
 		endif
 	  endloop 
-	  call UnitUseItemPoint(hero_unit[hn], GetItemOfTypeOnUnit(tp_item, hero_unit[hn]), GetLocationX(teleport_loc), GetLocationY(teleport_loc))
+	  call UnitUseItemPoint(u, GetItemOfTypeOnUnit(tp_item, u), GetLocationX(teleport_loc), GetLocationY(teleport_loc))
   	  call RemoveLocation(teleport_loc)
   	  set teleport_loc = null
   else
-		call UnitUseItemPoint(hero_unit[hn], GetItemOfTypeOnUnit(tp_item, hero_unit[hn]), GetLocationX(home_location), GetLocationY(home_location))
+		call UnitUseItemPoint(u, GetItemOfTypeOnUnit(tp_item, u), GetLocationX(home_location), GetLocationY(home_location))
   endif
   set start_loc = null
-  //if hero_loc != null then
-	//call RemoveLocation( hero_loc )
-	//set hero_loc = null
-  //endif
+  if hero_loc != null then
+	call RemoveLocation( hero_loc )
+	set hero_loc = null
+  endif
   set p = null
-  call TQAddUnitJob(0.5, TELEPORT, 0, hero_unit[hn])
+  call TQAddUnitJob(0.5, TELEPORT, 0, u)
 endfunction
 
 function TeleportToLoc takes unit u, location l returns nothing
@@ -147,7 +147,7 @@ function ExecuteSaveHero takes integer hn, integer a, unit healer returns nothin
     call TQAddGroupJob(0, ZEPPELIN_MOVE, ZTARGET_FOUNTAIN, hero_unit[hn], g)
   elseif a == ACTION_TP then
 	call CreateDebugTag("Hero: Town Portalling", 10, hero_unit[hn], 4.00, 2.00)  
-    call TeleportHome(hn)
+    call TeleportHome(hero_unit[hn])
   elseif a == ACTION_MOONWELLS then
  	call CreateDebugTag("HERO: Going to Moonwells", 10, hero_unit[hn], 4.00, 2.00) 
 	call GroupAddUnit(unit_healing,hero_unit[hn])
@@ -221,15 +221,15 @@ function MicroHeroJob takes integer hn returns nothing
 			call TeleportToLoc(hero_unit[hn], town_loc[most_threatened_town])
 		  elseif DistanceBetweenPoints(hero_loc[hn], home_location) > 2500 then
 		  		call CreateDebugTag("HERO: Teleporting home town too threatened", 10, hero_unit[hn], 4.00, 2.00)	
-		      call TeleportHome(hn)
+		      call TeleportHome(hero_unit[hn])
 		  endif
 	 // Next statement detects when the main army is outmatched and so teleports back to home base
 	 elseif not teleporting and attack_running and IsUnitInRangeXY(hero_unit[hn],GetLocationX(army_loc[main_army]), GetLocationY(army_loc[main_army]), battle_radius) and GetItemNumberOnUnit(tp_item, hero_unit[hn]) > 0 and army_strength[GetArmyOfUnit(hero_unit[hn])] >= teleport_army_min_strength and CaptainRetreating() and isfleeing and DistanceBetweenPoints(hero_loc[hn], home_location) > teleport_low_threat_distance then
 		call CreateDebugTag("HERO: Army outmatched-teleporting home", 10, hero_unit[hn], 4.00, 2.00)
-		call TeleportHome(hn)
+		call TeleportHome(hero_unit[hn])
 	 elseif not teleporting and hero_enemy_density[hn] > 5 and IsUnitInGroup(hero_unit[hn], unit_healing) and DistanceBetweenPoints(hero_dir[hn],hero_loc[hn]) <= 225 then
 		call CreateDebugTag("HERO: Surround Detection Teleportation", 10, hero_unit[hn], 4.00, 2.00)
-		call TeleportHome(hn)		
+		call TeleportHome(hero_unit[hn])		
 	 endif
   endif
   call TQAddJob(1, MICRO_HERO, hn)

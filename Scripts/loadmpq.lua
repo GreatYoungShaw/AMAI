@@ -1,6 +1,6 @@
 -- Use loadmpq(priority,mappath) to load mpqs
 -- e.g. loadmpq(10,"C:\\War3\\Maps\\hello\ bar.w3x")
---loadmpq(30,"AMAI.mpq")
+loadmpq(15,"AMAI.mpq")
 if grim.getmodulehandle("worldedit.exe") ~= 0 then
   --  loadmpq(16,"windows.mpq")
     -- inject World Editor only mpqs :

@@ -1,4 +1,4 @@
-﻿Strategy Name in AI	Translated Strategy Name	Translated Strategy Report
+Strategy Name in AI	Translated Strategy Name	Translated Strategy Report
 NormalElf	常�	我打算使用暗夜常规打?
 MassH	猎手猛禽德鲁?	我打算暴猎手加少部分猛禽德鲁?
 Druids	猛禽德鲁依利爪德鲁依	我打算使用双德鲁依打?

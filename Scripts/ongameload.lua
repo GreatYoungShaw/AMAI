@@ -4,7 +4,7 @@
 
 --if getregpair("Software\\Grimoire\\","Enable war3err") == "on" then
 	loaddll("bin\\war3err.dll")
-	--loaddll("bin\\loadmpq.dll")
+	loaddll("bin\\loadmpq.dll")
 --end
 --loaddll("bin\\japi.dll")
 --loaddll("bin\\nativepack.dll") -- requires japi.dll
